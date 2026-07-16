@@ -31,7 +31,14 @@ _MODEL_VERSION_NOTE = (
 
 def build_attestation(pins: Pins, run_meta: RunMeta | None = None) -> dict[str, Any]:
     """Build the self-verifying attestation block for a QMS record."""
-    pins_json = pins.model_dump(mode="json")
+    return build_attestation_from_dict(pins.model_dump(mode="json"), run_meta)
+
+
+def build_attestation_from_dict(
+    pins_json: dict[str, Any] | None, run_meta: RunMeta | None = None
+) -> dict[str, Any]:
+    """Attestation from an already-serialized pins dict (e.g. from a snapshot)."""
+    pins_json = pins_json or {}
     block: dict[str, Any] = {
         "generated_by": f"harness-factory {ENGINE_VERSION}",
         "qms_baseline_tag": QMS_BASELINE_TAG,

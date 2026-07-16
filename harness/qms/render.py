@@ -147,5 +147,40 @@ def render_change_request_md(record: dict[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def render_pms_report_md(record: dict[str, Any]) -> str:
+    m = record["metadata"]
+    inputs = record["inputs_reviewed"]["reliability_metrics"]
+    sig = record["signal_assessment"]
+    lines: list[str] = ["# PMS Periodic Report", "", "## Metadata"]
+    _kv(lines, "Report ID", m["report_id"])
+    _kv(lines, "Product ID", m["product_id"])
+    _kv(lines, "Review Period", m["review_period"])
+
+    lines += ["", "## Inputs Reviewed"]
+    orr = inputs["override_rate"]
+    _kv(lines, "Override rate", f"{orr['mean']:.3f} (95% CI {orr['lo']:.3f}–{orr['hi']:.3f})")
+    _kv(lines, "Events", inputs["n_events"])
+    lines.append("")
+    lines.append("| Element | Necessary | Present rate | Logged n |")
+    lines.append("| --- | --- | --- | --- |")
+    for c in inputs["input_completeness"]:
+        pr = "—" if c["present_rate"] is None else f"{c['present_rate']:.2f}"
+        lines.append(f"| {c['element']} | {c['necessary']} | {pr} | {c['logged_n']} |")
+
+    lines += ["", "## Signal Assessment"]
+    _kv(lines, "Drift status", sig["drift_status"])
+    for s in sig["signals_identified"]:
+        lines.append(f"- {s}")
+
+    att = record["attestation"]
+    lines += ["", "## Attestation"]
+    _kv(lines, "QMS Baseline", att["qms_baseline_tag"])
+    _kv(lines, "Pinned Inputs Hash", att["pinned_inputs_hash"])
+    lines.append(f"- {att['draft_notice']}")
+
+    lines += ["", "## Signatures", "- (unsigned — requires human approval)"]
+    return "\n".join(lines) + "\n"
+
+
 def write_text(path: str | Path, text: str) -> None:
     Path(path).write_text(text, encoding="utf-8")

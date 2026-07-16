@@ -201,6 +201,56 @@ def _cmd_new(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_monitor(args: argparse.Namespace) -> int:
+    from harness.monitoring import build_snapshot, evaluate_drift, load_events
+    from harness.qms.pms import build_aims_event, build_pms_report
+    from harness.qms.render import render_pms_report_md
+
+    pack = load_pack(args.pack)
+    store = RunStore(args.out)
+    contract = store.read_contract(args.run)
+    if contract is None:
+        print(f"error: no contract for run {args.run} (run a battery first)", file=sys.stderr)
+        return 1
+
+    events = load_events(args.events)
+    period = args.period or (events[0].period if events else "unknown")
+    snapshot = build_snapshot(events, contract, period)
+
+    prior_snapshot = None
+    if args.prior:
+        prior_events = load_events(args.prior)
+        prior_period = prior_events[0].period if prior_events else "prior"
+        prior_snapshot = build_snapshot(prior_events, contract, prior_period)
+
+    drift = evaluate_drift(snapshot, pack.monitoring, prior_snapshot=prior_snapshot)
+
+    mon_dir = store.runs_dir / args.run / "monitoring" / period
+    mon_dir.mkdir(parents=True, exist_ok=True)
+    write_text(mon_dir / "snapshot.json", json.dumps(snapshot, indent=2, sort_keys=True))
+    write_text(mon_dir / "drift.json", json.dumps(drift, indent=2, sort_keys=True))
+
+    pms = build_pms_report(snapshot, drift)
+    write_text(mon_dir / "pms_report.json", json.dumps(pms, indent=2, sort_keys=True))
+    write_text(mon_dir / "pms_report.md", render_pms_report_md(pms))
+
+    aims = build_aims_event(snapshot, drift)
+    if aims is not None:
+        write_text(mon_dir / "aims_event.json", json.dumps(aims, indent=2, sort_keys=True))
+
+    print(f"monitoring snapshot for run {args.run}, period {period}:")
+    print(f"  override rate: {snapshot['override_rate']['mean']:.3f} (n={snapshot['n_events']})")
+    print(f"  drift status: {drift['status']}")
+    for f in drift["absolute"]["findings"]:
+        print(f"    absolute: {f['kind']}")
+    for f in drift["trend"]["findings"]:
+        print(f"    trend: {f['kind']}")
+    print(f"  PMS report: {mon_dir / 'pms_report.md'}")
+    if aims is not None:
+        print(f"  AIMS event raised: {mon_dir / 'aims_event.json'}")
+    return 0
+
+
 def _cmd_ui(args: argparse.Namespace) -> int:
     try:
         import uvicorn
@@ -252,6 +302,15 @@ def build_parser() -> argparse.ArgumentParser:
     qms_change.add_argument("--baseline", required=True, help="baseline run id")
     qms_change.add_argument("--candidate", required=True, help="candidate run id")
     qms_change.set_defaults(func=_cmd_qms_change)
+
+    monitor = sub.add_parser("monitor", help="ingest production events -> monitoring snapshot + drift + PMS/AIMS")
+    monitor.add_argument("pack", type=Path, help="path to the pack directory")
+    monitor.add_argument("--run", required=True, help="run id whose contract to monitor against")
+    monitor.add_argument("--events", required=True, type=Path, help="JSONL of pseudonymized production events")
+    monitor.add_argument("--prior", type=Path, default=None, help="optional prior-period events for trend")
+    monitor.add_argument("--period", default=None, help="period label (defaults to the events' period)")
+    monitor.add_argument("--out", type=Path, default=Path("./runs"), help="run store root")
+    monitor.set_defaults(func=_cmd_monitor)
 
     lint = sub.add_parser("lint", help="check a pack for authoring gaps")
     lint.add_argument("pack", type=Path, help="path to the pack directory")

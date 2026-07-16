@@ -1,0 +1,7 @@
+# Post-market monitoring thresholds (separate namespace from acceptance.yaml).
+#   *_max: metric must stay at or below; *_min: at or above;
+#   override_trend_delta_max: max allowed rise in override rate vs the prior period.
+thresholds:
+  override_rate_max: 0.30
+  input_completeness_min: 0.80
+  override_trend_delta_max: 0.10

@@ -74,6 +74,9 @@ def load_pack(path: str | Path) -> Pack:
         judge = JudgeSpec(**_read_yaml(root / "judge.yaml"))
         acceptance = AcceptanceSpec(**(_read_yaml(root / "acceptance.yaml") or {}))
 
+        monitoring_doc = _read_yaml(root / "monitoring.yaml") if (root / "monitoring.yaml").exists() else {}
+        monitoring = (monitoring_doc or {}).get("thresholds", {})
+
         adj_dir = root / "rubric" / "adjudication"
         adj_files = sorted(adj_dir.glob("*.json")) if adj_dir.is_dir() else []
         adjudications = [Adjudication(**_read_json(p)) for p in adj_files]
@@ -111,6 +114,7 @@ def load_pack(path: str | Path) -> Pack:
         suts=suts,
         judge=judge,
         acceptance=acceptance,
+        monitoring=monitoring,
         adjudications=adjudications,
         mocks=mocks,
     )

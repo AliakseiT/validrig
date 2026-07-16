@@ -25,6 +25,9 @@ body / regulatory advisor; both are fast-moving and deployment-specific.
 | **Calibration Status** | `runs/<id>/qms/calibration_status.json` | QMS record |
 | **Change Request** | `qms/change_<a>__<b>.{md,json}` | QMS record |
 | **Package Manifest** | `runs/<id>/qms/package_manifest.json` | QMS index |
+| MonitoringSnapshot + drift | `runs/<id>/monitoring/<period>/{snapshot,drift}.json` | derived |
+| **PMS Periodic Report** | `runs/<id>/monitoring/<period>/pms_report.{md,json}` | QMS record |
+| **AIMS Event** (on drift) | `runs/<id>/monitoring/<period>/aims_event.json` | QMS record |
 
 Every QMS record carries an attestation (pinned-inputs hash + r05 baseline tag
 `QMS-2026-07-09-R005`) and an **unsigned** signature block — draft evidence a
@@ -38,8 +41,9 @@ human reviews and signs.
 | InputContract | (f) performance characterization | Art. 15 (performance envelope); Art. 13 transparency (input needs) | A.6 (system behaviour understanding) |
 | Calibration Status | evidence-quality assurance for (f)/(h) | Art. 15 (measurement validity of the eval) | A.6 (verification of AI-derived measures) |
 | RegressionDiff + Change Request | change control feeding (g) manufacture-per-documentation | Art. 43(4) predetermined changes / substantial-modification assessment | A.6 change management |
-| MonitoringSnapshot *(M5, not built)* | (h) review of clinical-use experience | Art. 72 post-market monitoring | A.6 operation & monitoring |
-| AIMS register/event *(not built)* | — | supports Art. 9 risk management | A.5 AI risk & impact assessment |
+| MonitoringSnapshot + drift | (h) review of clinical-use experience | Art. 72 post-market monitoring | A.6 operation & monitoring |
+| PMS periodic report | (h) post-market surveillance record | Art. 72 PMS | A.6 monitoring review |
+| AIMS event (on drift) | (h) signal → corrective action | supports Art. 9 risk management | A.5 AI risk & event handling |
 
 ## The boundary — what the harness does NOT produce
 

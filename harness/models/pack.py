@@ -152,6 +152,9 @@ class Pack(_Frozen):
     suts: list[SUTSpec]
     judge: JudgeSpec
     acceptance: AcceptanceSpec
+    # Post-market monitoring thresholds (distinct namespace from acceptance):
+    # override_rate_max, input_completeness_min, override_trend_delta_max.
+    monitoring: dict[str, float] = Field(default_factory=dict)
     adjudications: list[Adjudication] = Field(default_factory=list)
     # Recorded tool mocks for agent SUTs: {case_id: {tool: {args_hash: {...}}}}.
     mocks: dict[str, Any] = Field(default_factory=dict)

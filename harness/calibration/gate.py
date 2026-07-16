@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from typing import Any
 
-DEFAULT_MIN_N = 10
+from harness.power import DEFAULT_MIN_N, is_underpowered
 
 
 def evaluate_gate(
@@ -50,7 +50,7 @@ def evaluate_gate(
 def _status_for(stats: dict[str, Any], kappa_min: float, min_n: int) -> dict[str, Any]:
     n = stats.get("n", 0)
     kappa = stats.get("kappa")
-    if n < min_n or kappa is None:
+    if is_underpowered(n, min_n) or kappa is None:
         status = "advisory_low_n"
     elif kappa >= kappa_min:
         status = "pass"
