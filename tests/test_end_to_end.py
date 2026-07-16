@@ -26,6 +26,12 @@ def test_demo_pack_runs_end_to_end(tmp_path):
     msc = set(r.contract["minimal_sufficient_set_candidate"])
     assert {"pathology_report", "molecular_report", "imaging_text"} <= msc
     assert "meds" not in msc
+    # prior_notes and meds are only ablated bundled (never in isolation), so the
+    # contract must report them as unmeasured, not as measured-zero.
+    by_name = {e["name"]: e for e in r.contract["elements"]}
+    assert by_name["meds"]["measured"] is False
+    assert by_name["meds"]["information_value"] is None
+    assert by_name["pathology_report"]["measured"] is True
     # artifacts written to disk
     assert (store.runs_dir / r.run_id / "contract.json").exists()
     assert (store.runs_dir / r.run_id / "validation_report.json").exists()

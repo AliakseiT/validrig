@@ -29,13 +29,19 @@ def extract_contract(
 ) -> dict[str, Any]:
     elements = []
     for spec in schema.elements:
+        measured = spec.name in information_value
         elements.append(
             {
                 "name": spec.name,
                 "modality": spec.modality,
                 "language": spec.language,
                 "required": spec.required,
-                "information_value": round(information_value.get(spec.name, 0.0), 6),
+                # An element is "measured" only if it was ablated in isolation.
+                # A bundled-only or never-dropped element is unknown, not zero —
+                # this distinction is load-bearing for regression diffs, which
+                # must tell "newly stopped using" apart from "never measured".
+                "measured": measured,
+                "information_value": round(information_value[spec.name], 6) if measured else None,
             }
         )
 

@@ -33,13 +33,27 @@ def test_contract_is_serializable_with_pins_and_elements():
     iv = {"pathology_report": 0.4, "molecular_report": 0.2, "prior_notes": 0.0}
     critical = {"critical_omission_rate": {"mean": 0.1, "lo": 0.0, "hi": 0.2}}
     contract = extract_contract(_pins(), iv, critical, _schema())
-    blob = json.dumps(contract)  # must be serializable
+    json.dumps(contract)  # must be serializable
     assert contract["pins"]["seed"] == 7
     names = {e["name"] for e in contract["elements"]}
     assert names == {"pathology_report", "molecular_report", "prior_notes"}
     # minimal sufficient set keeps the informative elements, drops the useless one
     assert "pathology_report" in contract["minimal_sufficient_set_candidate"]
     assert "prior_notes" not in contract["minimal_sufficient_set_candidate"]
+
+
+def test_unmeasured_element_is_null_not_zero():
+    # molecular_report and prior_notes were never ablated in isolation, so they
+    # are unmeasured — reported as null, distinct from a measured ~0.
+    iv = {"pathology_report": 0.0}
+    critical = {"critical_omission_rate": {"mean": 0.0, "lo": 0.0, "hi": 0.0}}
+    contract = extract_contract(_pins(), iv, critical, _schema())
+    by_name = {e["name"]: e for e in contract["elements"]}
+    assert by_name["pathology_report"]["measured"] is True
+    assert by_name["pathology_report"]["information_value"] == 0.0
+    assert by_name["molecular_report"]["measured"] is False
+    assert by_name["molecular_report"]["information_value"] is None
+    assert by_name["prior_notes"]["measured"] is False
 
 
 def test_contract_contains_no_phi_values():
