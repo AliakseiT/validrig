@@ -154,7 +154,9 @@ class LLMJudge(Judge):
             "model": self.binding.model_id,
             "messages": self._messages(prompt),
             "temperature": 0,
-            "seed": seed,
+            # `seed` is intentionally NOT sent by default: it is not portable
+            # (e.g. Google's OpenAI-compatible endpoint rejects it with 400). A
+            # provider that supports it can set it via the judge binding params.
             **self.binding.params,
         }
         try:
