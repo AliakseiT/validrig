@@ -10,7 +10,9 @@ first-class **fake model** and **fake judge**.
 
 ```bash
 python3.12 -m venv .venv && .venv/bin/pip install -e ".[dev]"
-.venv/bin/pytest -q                                   # 107 tests, ~3s
+.venv/bin/pytest -q                                   # 120 tests, ~3s
+.venv/bin/harness new packs/my-pack --id my-pack      # scaffold a new pack
+.venv/bin/harness lint packs/demo-tumor-board         # check a pack for authoring gaps
 .venv/bin/harness run packs/demo-tumor-board --battery smoke --out ./runs --seed 1
 .venv/bin/harness run packs/demo-tumor-board --battery regression --out ./runs --seed 1
 .venv/bin/harness diff --out ./runs --baseline <run_a> --candidate <run_b>
@@ -23,7 +25,7 @@ python3.12 -m venv .venv && .venv/bin/pip install -e ".[dev]"
 | Milestone | Status | Notes |
 |-----------|--------|-------|
 | **M1 engine core** | ✅ complete | pack loader, casebank, LLM-call SUT adapter (+ OpenAI-compatible, mock-tested), ablation+format axes, judge grading, append-only SQLite+parquet store, bootstrap stats, InputContract + ValidationReport, `demo-tumor-board` demo, end-to-end + determinism + zero-leak gates |
-| **M2 tumor-board tooling** | 🟡 partial | ✅ DE **language axis** + battery axis-scoping + multilingual demo. ❌ deferred: rubric authoring/adjudication UI, PDF/OCR ingestion (need human/design input — not suitable for unattended build) |
+| **M2 tumor-board tooling** | 🟡 authoring done | ✅ DE **language axis** + battery axis-scoping; **adjudication ingestion** (loader reads `rubric/adjudication/*.json` with referential integrity; gold flows into `pack_hash`); **`harness lint`** (rubric + adjudication-coverage checks); **`harness new`** scaffold (loads + runs out of the box). ❌ deferred (each needs real data / a clinical decision): **pseudonymization boundary** (Presidio+OpenMed; recall unverifiable on synthetic data), **PDF/OCR ingestion**, judge-vs-gold metric |
 | **M3 regression discipline** | 🟢 done (core) | ✅ battery pinning, **RegressionDiff**, acceptance gating, CLI `diff`, native **G-Eval `LLMJudge`** (Gap 1), and now the **judge-calibration loop** (Gap 2): deterministic sampling, append-only human grades, Cohen's κ + % agreement, and a standalone **calibration gate** (advisory when underpowered). Surfaced in the review UI. Gate is kept out of the synchronous run/report path by design (calibration is asynchronous) |
 | **Review UI (M2/M3)** | 🟡 v1 (calibration) | ✅ FastAPI + Jinja2 calibration review (dashboard, grade sampled generations, agreement/κ + gate), behind the `[ui]` extra; binds localhost by default; never mutates immutable grades. Data path tested via TestClient + live uvicorn smoke. ❌ deferred: clinical UX review, adjudication authoring (write-only until loader ingests it), multi-rater, SSO |
 | **M4 agent SUTs** | ⬜ not started | trace protocol/tool mocks/process rubrics — schema seams exist (`SUTSpec.kind`, `Trace`/`Step`) |
@@ -34,7 +36,7 @@ python3.12 -m venv .venv && .venv/bin/pip install -e ".[dev]"
 
 - `docs/proposals/2026-07-16-m3-regression-fixes.md` — LLM judge ✅ shipped; calibration gate ✅ shipped
 - `docs/proposals/2026-07-16-adjudication-calibration-ui.md` — calibration review UI ✅ v1 shipped
-- `docs/proposals/2026-07-16-m2-tooling-fixes.md` — adjudication ingestion, pseudonymization boundary, PDF/OCR, rubric authoring CLI (not yet built)
+- `docs/proposals/2026-07-16-m2-tooling-fixes.md` — adjudication ingestion ✅ + rubric authoring CLI ✅ shipped; pseudonymization boundary + PDF/OCR not yet built
 
 ## Design guarantees proven by tests
 

@@ -40,6 +40,7 @@ def render_vv_report_md(record: dict[str, Any]) -> str:
     _kv(lines, "Covered Risk Controls", ", ".join(scope["covered_risk_controls"]))
     _kv(lines, "Environment / Tooling", scope["environment_tooling_references"])
     _kv(lines, "Configuration Capture", scope["configuration_capture_references"])
+    _kv(lines, "Reference Standard (adjudication)", "; ".join(scope.get("reference_standard", [])))
 
     lines += ["", f"## Summary of Results ({s['condition']})"]
     _kv(lines, "Total Test Cases", s["total_test_cases"])

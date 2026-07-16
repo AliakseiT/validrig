@@ -121,6 +121,41 @@ def _cmd_qms_change(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_lint(args: argparse.Namespace) -> int:
+    from harness.authoring.lint import has_errors, lint_pack
+
+    try:
+        pack = load_pack(args.pack)
+    except Exception as exc:  # structural problems are lint failures too
+        print(f"error: pack failed to load: {exc}", file=sys.stderr)
+        return 2
+
+    findings = lint_pack(pack)
+    if not findings:
+        print(f"lint: {pack.manifest.id} — no findings")
+        return 0
+    for f in findings:
+        print(f"{f.severity}: [{f.code}] {f.message}")
+    errors = sum(1 for f in findings if f.severity == "error")
+    warnings = len(findings) - errors
+    print(f"lint: {errors} error(s), {warnings} warning(s)")
+    return 1 if has_errors(findings) else 0
+
+
+def _cmd_new(args: argparse.Namespace) -> int:
+    from harness.authoring.scaffold import scaffold_pack
+
+    pack_id = args.id or Path(args.dest).name
+    try:
+        root = scaffold_pack(args.dest, pack_id)
+    except FileExistsError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    print(f"scaffolded pack '{pack_id}' at {root}")
+    print(f"  try: harness run {root} --battery smoke --out ./runs --seed 1")
+    return 0
+
+
 def _cmd_ui(args: argparse.Namespace) -> int:
     try:
         import uvicorn
@@ -172,6 +207,15 @@ def build_parser() -> argparse.ArgumentParser:
     qms_change.add_argument("--baseline", required=True, help="baseline run id")
     qms_change.add_argument("--candidate", required=True, help="candidate run id")
     qms_change.set_defaults(func=_cmd_qms_change)
+
+    lint = sub.add_parser("lint", help="check a pack for authoring gaps")
+    lint.add_argument("pack", type=Path, help="path to the pack directory")
+    lint.set_defaults(func=_cmd_lint)
+
+    new = sub.add_parser("new", help="scaffold a new runnable pack skeleton")
+    new.add_argument("dest", type=Path, help="destination directory for the new pack")
+    new.add_argument("--id", default=None, help="pack id (defaults to the directory name)")
+    new.set_defaults(func=_cmd_new)
 
     ui = sub.add_parser("ui", help="launch the calibration review UI (needs the 'ui' extra)")
     ui.add_argument("pack", type=Path, help="path to the pack directory")

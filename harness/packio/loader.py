@@ -19,6 +19,7 @@ from pydantic import ValidationError
 from harness.hashing import content_hash
 from harness.models.pack import (
     AcceptanceSpec,
+    Adjudication,
     BatterySpec,
     Case,
     CaseSchema,
@@ -72,10 +73,30 @@ def load_pack(path: str | Path) -> Pack:
 
         judge = JudgeSpec(**_read_yaml(root / "judge.yaml"))
         acceptance = AcceptanceSpec(**(_read_yaml(root / "acceptance.yaml") or {}))
+
+        adj_dir = root / "rubric" / "adjudication"
+        adj_files = sorted(adj_dir.glob("*.json")) if adj_dir.is_dir() else []
+        adjudications = [Adjudication(**_read_json(p)) for p in adj_files]
     except ValidationError as exc:
         raise PackValidationError(str(exc)) from exc
     except (yaml.YAMLError, json.JSONDecodeError) as exc:
         raise PackValidationError(f"could not parse pack file: {exc}") from exc
+
+    # Referential integrity: an adjudication must name a real case and only real
+    # rubric items. A dangling reference is a malformed pack, not a silent skip.
+    case_ids = {c.case_id for c in cases}
+    item_ids = {i.id for i in rubric.items}
+    for adj in adjudications:
+        if adj.case_id not in case_ids:
+            raise PackValidationError(
+                f"adjudication references unknown case_id '{adj.case_id}'"
+            )
+        for item_id in adj.values:
+            if item_id not in item_ids:
+                raise PackValidationError(
+                    f"adjudication for case '{adj.case_id}' references unknown "
+                    f"rubric item '{item_id}'"
+                )
 
     pack = Pack(
         manifest=manifest,
@@ -87,6 +108,7 @@ def load_pack(path: str | Path) -> Pack:
         suts=suts,
         judge=judge,
         acceptance=acceptance,
+        adjudications=adjudications,
     )
     pack_hash = content_hash(pack.model_dump(mode="json", exclude={"pack_hash"}))
     return pack.model_copy(update={"pack_hash": pack_hash})

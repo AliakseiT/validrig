@@ -186,6 +186,10 @@ def build_vv_report(
             "covered_risk_controls": [i.id for i in pack.rubric.items if i.critical],
             "environment_tooling_references": build_attestation(pins, run_meta)["generated_by"],
             "configuration_capture_references": f"env_hash {run_meta.env_hash[:16]}",
+            "reference_standard": sorted(
+                {f"{a.adjudicated_by} ({a.adjudicated_at})" for a in pack.adjudications}
+            )
+            or ["none recorded"],
         },
         "summary_of_results": {
             "condition": "baseline (intended input)",

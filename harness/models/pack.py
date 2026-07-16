@@ -54,6 +54,20 @@ class Case(_Frozen):
     translations: dict[str, dict[str, str]] = Field(default_factory=dict)
 
 
+class Adjudication(_Frozen):
+    """A physician's reference (gold) scores for one case against the rubric.
+
+    The human reference layer, distinct from ``Case.ground_truth`` (machine-
+    checkable evidence tokens). It records who established the gold and when, so
+    it doubles as reference-standard provenance for QMS evidence.
+    """
+
+    case_id: str
+    adjudicated_by: str
+    adjudicated_at: str
+    values: dict[str, float] = Field(default_factory=dict)
+
+
 class RubricItem(_Frozen):
     id: str
     statement: str
@@ -133,7 +147,14 @@ class Pack(_Frozen):
     suts: list[SUTSpec]
     judge: JudgeSpec
     acceptance: AcceptanceSpec
+    adjudications: list[Adjudication] = Field(default_factory=list)
     pack_hash: str = ""
+
+    def adjudication(self, case_id: str) -> Adjudication | None:
+        for a in self.adjudications:
+            if a.case_id == case_id:
+                return a
+        return None
 
     def battery(self, battery_id: str) -> BatterySpec | None:
         for b in self.batteries:
