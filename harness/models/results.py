@@ -77,13 +77,22 @@ class Generation(_Frozen):
 
 
 class Grade(_Frozen):
-    """Judge scores for one generation against the rubric. Content only."""
+    """Judge scores for one generation against the rubric. Content only.
+
+    ``item_scores`` holds only successfully graded items. An item the judge could
+    not grade (malformed output, endpoint error) is *not* scored 0 — that would
+    conflate "couldn't grade" with "graded zero" and corrupt downstream metrics.
+    Instead it is omitted from ``item_scores`` and recorded in ``item_status`` as
+    ``judge_error``. Only entries that deviate from the default ``graded`` state
+    appear in ``item_status``.
+    """
 
     case_id: str
     perturbation_id: str
     sample_idx: int
     item_scores: dict[str, float]
     judge_notes: dict[str, str]
+    item_status: dict[str, str] = {}
     human_agreement: dict[str, bool] | None = None
 
 

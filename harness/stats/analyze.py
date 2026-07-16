@@ -66,7 +66,12 @@ def critical_rates(
     indicators: list[float] = []
     for record in records:
         for item in record.critical_items:
-            score = record.item_scores.get(item, 0.0)
+            # An item the judge could not grade is absent from item_scores; it is
+            # excluded here rather than counted as an omission (0), so a judge
+            # error never inflates the critical-omission rate.
+            if item not in record.item_scores:
+                continue
+            score = record.item_scores[item]
             indicators.append(0.0 if score > 0 else 1.0)
     mean, lo, hi = bootstrap_ci(indicators, n_boot=n_boot, seed=seed)
     return {

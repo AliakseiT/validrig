@@ -22,6 +22,11 @@ _DRAFT_NOTE = (
     "Requires human review, verdict confirmation, and signature before use as "
     "QMS evidence."
 )
+_MODEL_VERSION_NOTE = (
+    "SUT and judge model_version are author-asserted. For a hosted endpoint that "
+    "may update silently, pin a local model or record the provider's returned "
+    "model id to keep this attestation trustworthy."
+)
 
 
 def build_attestation(pins: Pins, run_meta: RunMeta | None = None) -> dict[str, Any]:
@@ -34,6 +39,7 @@ def build_attestation(pins: Pins, run_meta: RunMeta | None = None) -> dict[str, 
         "pinned_inputs_hash": content_hash(pins_json),
         "pins": pins_json,
         "draft_notice": _DRAFT_NOTE,
+        "model_version_note": _MODEL_VERSION_NOTE,
     }
     if run_meta is not None:
         block["run_id"] = run_meta.run_id

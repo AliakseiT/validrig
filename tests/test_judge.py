@@ -29,17 +29,18 @@ def test_fake_judge_deterministic():
 
 def test_present_evidence_scores_higher_than_absent():
     j = FakeJudge()
-    present, _ = j.grade_item(_item(), "doc", "the EGFR deletion", _gt(), seed=0)
-    absent, _ = j.grade_item(_item(), "doc", "nothing relevant here", _gt(), seed=0)
-    assert present > absent
-    assert present == 1.0
-    assert absent == 0.0
+    present = j.grade_item(_item(), "doc", "the EGFR deletion", _gt(), seed=0)
+    absent = j.grade_item(_item(), "doc", "nothing relevant here", _gt(), seed=0)
+    assert present.score > absent.score
+    assert present.score == 1.0
+    assert absent.score == 0.0
+    assert present.status == "graded"
 
 
 def test_case_insensitive_match():
     j = FakeJudge()
-    score, _ = j.grade_item(_item(), "doc", "found egfr lowercase", _gt(), seed=0)
-    assert score == 1.0
+    result = j.grade_item(_item(), "doc", "found egfr lowercase", _gt(), seed=0)
+    assert result.score == 1.0
 
 
 def test_grade_generation_scores_every_item():

@@ -37,27 +37,49 @@ branches on `judge_spec.kind` and references an unimplemented
   SUTs). A judge-graded run is excluded from a regression *baseline* unless its
   grades are frozen (recorded). This mirrors the SUT record/replay rule.
 
-**Don't reinvent the judging metrics — hook into maintained OSS.**
+**DECISION (2026-07-16): adopt the G-Eval *method*, do NOT vendor DeepEval —
+implemented natively. ✅ SHIPPED.**
 
-- **DeepEval** (Apache-2.0) — a local-first LLM-eval framework. It runs
-  LLM-as-judge metrics **locally with a custom/local judge model** (not tied to
-  OpenAI), and its cloud platform (Confident AI) is **opt-in only** — no data
-  leaves the node unless a user runs `deepeval login`. For PHI-never-leaves,
-  document "do not authenticate, disable telemetry" as a deployment control.
-  Its **G-Eval** metric is the strongest fit: you write criteria, inspect the
-  generated `evaluation_steps`, then **lock them in** for reproducible scores —
-  which is exactly our judge-pinning discipline. Pin the G-Eval `evaluation_steps`
-  + judge model id/version into `Pins`; a change to either is a revalidation event.
-- **Inspect** (`inspect_ai`, MIT) — worth adopting when M4 lands: it is built for
-  reproducible, tool-using-agent evaluation and log-based replay, aligning with
-  our agent-SUT and determinism goals.
-- **RAGAS** — reference-free RAG metrics, for chain/RAG SUTs.
+We evaluated DeepEval as the judging dependency and rejected it on evidence:
 
-**Architecture: library behind our `Judge` ABC, control stays here.** The harness
-keeps the pinning, the run store, and the determinism spine; DeepEval/G-Eval is an
-optional *grading backend* behind `Judge.grade_item`, not a replacement engine —
-otherwise we lose our versioning discipline. Keep it behind an optional extra
-(`pip install harness-factory[judge]`) so the core stays thin.
+- **29 runtime dependencies vs. our 5** — a 6× surface increase for a component
+  that only needs to render a prompt, call a model, and parse a score.
+- **`grpcio`** — a compiled binary dependency, against "maintainable by a
+  hospital IT generalist."
+- **Telemetry on by default** (`posthog` + `sentry-sdk` + `opentelemetry`), with
+  a documented history of the opt-out *breaking evaluations* and regressing
+  (issues #757, #1046, #1613, #2231). For a tool whose non-goal is "no external
+  calls except configured model endpoints," a dep that phones home unless a
+  fragile env var is set is a compliance hazard, not a convenience cost.
+- **`pytest` as a runtime dependency** — a test framework that wants to own the
+  eval loop we already own.
+
+The smallest dependency is **zero**. We already have the `OpenAICompatModel`
+transport; the judge is a prompt builder + a tolerant JSON parse on top of it. So
+we implemented **`harness/judge/llm.py:LLMJudge`** — a native, faithful G-Eval
+form-filling judge — with no new runtime deps, fully under our pinning and
+record/replay discipline.
+
+What shipped:
+- `LLMJudge` grades an item against its criterion + (optional, **pinned**)
+  `evaluation_steps` via a structured `{"score","reasoning"}` response;
+  reference-free by default (grades vs criteria, not gold), `include_reference`
+  opt-in.
+- `reproducible = False`: called **once** per generation, grades recorded, and
+  analysis/replay read recorded grades — never re-invoked (proven by
+  `test_judge_called_once_then_replayed_from_store`).
+- Judge failures (malformed output, endpoint error) are a distinct
+  **`judge_error`** state (`ItemGrade` / `Grade.item_status`), never a real 0 —
+  so a judge hiccup can't falsely fail acceptance.
+- Judge change = revalidation event with no new machinery: `judge.yaml` is in
+  `pack_hash`, which is in `Pins`, so a prompt/model change flows to `run_id`
+  (proven by `test_judge_change_is_a_revalidation_event`).
+
+Still worth adopting later, but not now:
+- **Inspect** (`inspect_ai`, MIT) — for M4 agent SUTs (reproducible tool-use eval).
+- A DeepEval *adapter* remains possible as an opt-in `[judge]` extra for teams
+  that already run it — but it is **not** a default or a core dep, and the
+  telemetry posture must be audited per release before we would bless it.
 
 **Verification.** Unit-test `LLMJudge` request/response mapping with
 `httpx.MockTransport` (exactly as `test_sut_openai_compat.py` does). For a

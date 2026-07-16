@@ -12,11 +12,13 @@ from __future__ import annotations
 
 from typing import Any
 
-from harness.judge.base import Judge
+from harness.judge.base import ItemGrade, Judge
 from harness.models.pack import RubricItem
 
 
 class FakeJudge(Judge):
+    reproducible = True
+
     def grade_item(
         self,
         item: RubricItem,
@@ -24,14 +26,14 @@ class FakeJudge(Judge):
         output: str,
         ground_truth: dict[str, Any],
         seed: int,
-    ) -> tuple[float, str]:
+    ) -> ItemGrade:
         spec = ground_truth.get(item.id) or {}
         evidence = [str(e) for e in spec.get("evidence", [])]
         haystack = output.lower()
         found = [e for e in evidence if e.lower() in haystack]
 
         if not evidence:
-            return 0.0, f"no adjudicated evidence for {item.id}; scored 0"
+            return ItemGrade.graded(0.0, f"no adjudicated evidence for {item.id}; scored 0")
         if found:
-            return item.max_score, f"found evidence: {', '.join(found)}"
-        return 0.0, f"missing evidence: {', '.join(evidence)}"
+            return ItemGrade.graded(item.max_score, f"found evidence: {', '.join(found)}")
+        return ItemGrade.graded(0.0, f"missing evidence: {', '.join(evidence)}")

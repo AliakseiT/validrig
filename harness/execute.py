@@ -23,6 +23,7 @@ import harness.perturb  # noqa: F401  (registers built-in axes)
 from harness.artifacts.contract import extract_contract
 from harness.artifacts.report import build_validation_report, render_report_json
 from harness.envhash import env_hash
+from harness.judge.base import Judge
 from harness.judge.grading import build_judge, grade_generation
 from harness.models.pack import Case, Pack
 from harness.models.results import (
@@ -78,6 +79,7 @@ def run_battery(
     store: RunStore,
     seed: int = 0,
     now: Callable[[], str] | None = None,
+    judge: Judge | None = None,
 ) -> list[RunResult]:
     battery = pack.battery(battery_id)
     if battery is None:
@@ -85,7 +87,12 @@ def run_battery(
     clock = now or _utc_now
 
     units = expand_battery(pack, battery)
-    judge = build_judge(pack.judge)
+    # The judge is called exactly once per generation here; grades are recorded to
+    # the store and all downstream analysis/replay reads recorded grades. A live
+    # LLM judge (reproducible=False) is therefore never re-invoked on replay,
+    # keeping the determinism/regression guarantees intact. An injected judge
+    # (e.g. for offline tests of the LLM path) overrides the pack default.
+    judge = judge or build_judge(pack.judge)
     critical_items = tuple(i.id for i in pack.rubric.items if i.critical)
 
     results: list[RunResult] = []
@@ -161,10 +168,13 @@ def run_battery(
         cr_full = critical_rates(records, seed=seed)
         ms_full = mean_score(records, seed=seed)
 
+        judge_errors = sum(len(g.item_status) for g in grades)
         summary = {
             "condition": "baseline",
             "mean_score": ms_base,
             "critical_omission_rate": cr_base["critical_omission_rate"],
+            "judge_errors": judge_errors,
+            "judge_reproducible": judge.reproducible,
             "robustness_full_battery": {
                 "mean_score": ms_full,
                 "critical_omission_rate": cr_full["critical_omission_rate"],

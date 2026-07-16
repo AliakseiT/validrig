@@ -4,19 +4,28 @@
 from __future__ import annotations
 
 from harness.judge.base import Judge
-from harness.judge.fake import FakeJudge
 from harness.models.pack import Case, JudgeSpec, Rubric
 from harness.models.results import Generation, Grade
 
 
 def build_judge(judge_spec: JudgeSpec) -> Judge:
     if judge_spec.kind == "fake":
+        from harness.judge.fake import FakeJudge
+
         return FakeJudge()
     if judge_spec.kind == "openai_compat":
-        from harness.judge.llm import LLMJudge  # pragma: no cover - M2+
+        from harness.judge.llm import GradingConfig, LLMJudge
+        from harness.models.sut import SUTBinding
 
-        return LLMJudge(judge_spec)
-    raise NotImplementedError(f"judge kind '{judge_spec.kind}' not supported in M1")
+        binding = SUTBinding(**judge_spec.binding)
+        grading_cfg = judge_spec.grading
+        grading = GradingConfig(
+            include_document=grading_cfg.get("include_document", True),
+            include_reference=grading_cfg.get("include_reference", False),
+            evaluation_steps=grading_cfg.get("evaluation_steps", {}),
+        )
+        return LLMJudge(binding, grading)
+    raise NotImplementedError(f"judge kind '{judge_spec.kind}' not supported")
 
 
 def grade_generation(
@@ -28,17 +37,24 @@ def grade_generation(
 ) -> Grade:
     item_scores: dict[str, float] = {}
     judge_notes: dict[str, str] = {}
+    item_status: dict[str, str] = {}
     document = str(case.elements.get("__document__", ""))
     for item in rubric.items:
-        score, note = judge.grade_item(
+        result = judge.grade_item(
             item, document, generation.raw_output, case.ground_truth, seed
         )
-        item_scores[item.id] = score
-        judge_notes[item.id] = note
+        judge_notes[item.id] = result.note
+        if result.is_error or result.score is None:
+            # Record the error state; do NOT score it 0 (that would conflate
+            # "couldn't grade" with "graded zero").
+            item_status[item.id] = result.status
+        else:
+            item_scores[item.id] = result.score
     return Grade(
         case_id=generation.case_id,
         perturbation_id=generation.perturbation_id,
         sample_idx=generation.sample_idx,
         item_scores=item_scores,
         judge_notes=judge_notes,
+        item_status=item_status,
     )

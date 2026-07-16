@@ -100,6 +100,11 @@ class JudgeSpec(_Frozen):
     version: str
     kind: str
     binding: dict[str, Any] = Field(default_factory=dict)
+    # LLM-judge grading config: include_document, include_reference, and pinned
+    # evaluation_steps (keyed by rubric item id). Part of the pack, so any change
+    # flows into pack_hash and therefore into run_id — a judge change is a
+    # revalidation event with no extra machinery.
+    grading: dict[str, Any] = Field(default_factory=dict)
     calibration_fraction: float = 0.1
 
 

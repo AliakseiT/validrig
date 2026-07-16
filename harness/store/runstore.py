@@ -152,6 +152,7 @@ class RunStore:
                 "sample_idx": [g.sample_idx for g in grades],
                 "item_scores_json": [json.dumps(g.item_scores) for g in grades],
                 "judge_notes_json": [json.dumps(g.judge_notes) for g in grades],
+                "item_status_json": [json.dumps(g.item_status) for g in grades],
                 "human_agreement_json": [json.dumps(g.human_agreement) for g in grades],
             }
         )
@@ -173,6 +174,7 @@ class RunStore:
                     sample_idx=r["sample_idx"],
                     item_scores=json.loads(r["item_scores_json"]),
                     judge_notes=json.loads(r["judge_notes_json"]),
+                    item_status=json.loads(r.get("item_status_json") or "{}"),
                     human_agreement=json.loads(r["human_agreement_json"]),
                 )
             )

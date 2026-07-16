@@ -5,3 +5,26 @@ binding: {}
 # Fraction of generations to sample for physician double-grading (calibration).
 # Wired into the schema now; the review UI arrives in M2.
 calibration_fraction: 0.1
+
+# --- Real LLM judge (native G-Eval), for reference -------------------------
+# Swap the block above for this to grade free-text output with a pinned model on
+# a BAA'd or local (e.g. vLLM) OpenAI-compatible endpoint. Grades are recorded
+# once and replayed; a change to any field below changes pack_hash -> run_id, so
+# a judge upgrade is automatically a revalidation event. No extra dependencies.
+#
+# id: geval-judge
+# version: "1"
+# kind: openai_compat
+# binding:
+#   model_id: "your-judge-model"
+#   model_version: "2026-01"          # author-asserted; pin a local model for real reproducibility
+#   endpoint: "http://localhost:8000/v1/chat/completions"
+#   params: { max_tokens: 512 }
+# grading:
+#   include_document: true            # judge sees the source, to check grounding
+#   include_reference: false          # reference-free by default (grades vs criteria, not gold)
+#   evaluation_steps:                 # optional, PINNED chain-of-thought steps per item
+#     item_diagnosis:
+#       - "Identify any histological diagnosis stated in the output."
+#       - "Judge whether it is supported by the source pathology text."
+# calibration_fraction: 0.1
