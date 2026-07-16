@@ -55,6 +55,51 @@ must never enter the engine's storage.
   the invariant ("no raw identifier crosses into `store/`"); the detector policy
   is a deliberate, reviewed decision, not an overnight pass.
 
+**Do not build the de-identifier from scratch — hook into maintained healthcare
+NLP.** Two mature, permissively-licensed, on-prem OSS building blocks fit the
+boundary directly:
+
+- **Microsoft Presidio** (MIT) — the anonymization *framework*. Its analyzer
+  detects entities via pluggable recognizers; its anonymizer offers operators
+  `replace / redact / hash / mask / encrypt / custom / keep`, and a
+  **`DeanonymizeEngine`** reverses `encrypt`. This is the exact mechanism for the
+  boundary: pseudonymize with `encrypt` under a key, and **the key is the
+  re-identification secret kept hospital-side** — decryption happens only there,
+  never inside the engine. Consistent per-entity replacement gives stable
+  pseudonyms across a case's elements.
+- **OpenMed** (Apache-2.0) — 380+ domain-adapted medical NER models plus PHI
+  de-identification, designed to run **on-device**. Wrap an OpenMed clinical NER
+  model as a **custom Presidio recognizer** to get healthcare-grade *recall* —
+  the safety-critical metric, since a missed identifier is a breach. Recent
+  comparative work shows healthcare-specific models beat general recognizers and
+  general LLMs on recall for clinical PHI.
+- Alternatives to evaluate per site: **medspaCy** (clinical spaCy pipeline),
+  **Philter** (hybrid rule + ML clinical de-id). Presidio itself also added a
+  `MedicalNERRecognizer` and a `surrogate` operator.
+
+**Architecture: library behind our boundary, not the other way round.** The
+harness owns the `harness/ingest/` interface and the "no raw identifier reaches
+`store/`" invariant; Presidio + OpenMed are the detector/anonymizer *backend*
+behind it. Concretely:
+
+```python
+class Pseudonymizer(ABC):
+    def pseudonymize(self, text: str, element: ElementSpec) -> tuple[str, ReidToken]: ...
+# PresidioOpenMedPseudonymizer(Pseudonymizer) wraps analyzer+anonymizer(encrypt)
+```
+
+**Dependency policy — keep the core thin.** Presidio + OpenMed pull spaCy,
+transformers, and torch. These must live behind an **optional extra**
+(`pip install harness-factory[deid]`), never in the core engine. A site with no
+ingestion need never installs them; the offline determinism guarantee of the
+core is unaffected.
+
+**Licensing:** MIT (Presidio) and Apache-2.0 (OpenMed, transformers, spaCy) are
+all compatible with the AGPL engine. One caveat to record: OpenMed model
+*weights* are Apache-2.0, but some were domain-adapted on corpora such as
+MIMIC-III — the deployer should confirm model provenance fits their data-use
+context before clinical adoption.
+
 **Verification.** An ingestion test asserts the invariant directly: feed a
 document with known synthetic identifiers, assert none appear in the resulting
 casebank JSON or in any `store/` artifact. A property test over the boundary is
@@ -111,10 +156,22 @@ several malformed rubrics (each flagged with a specific message).
 |---|---|
 | `harness/packio/loader.py` | read `rubric/adjudication/*.json` into `Adjudication` |
 | `harness/models/pack.py` | add `Adjudication` model; attach to `Pack` |
-| `harness/ingest/` | new — pseudonymization boundary (needs review), PDF/OCR |
+| `harness/ingest/` | new — pseudonymization boundary (needs review), PDF/OCR; `Pseudonymizer` ABC + Presidio/OpenMed backend |
 | `harness/cli.py` | add `rubric lint`, `pack new` |
-| `pyproject.toml` | optional `ocr` extra (pytesseract) |
+| `pyproject.toml` | optional extras: `deid` (presidio-analyzer, presidio-anonymizer, spacy, transformers/openmed), `ocr` (pytesseract) |
 
 **Ordering.** Gap 1 (adjudication ingestion) is small and unblocks M3
 calibration — do it first. Gap 2 (pseudonymization) needs a design review before
 code. Gaps 3–4 are independent and parallelizable.
+
+## Open-source building blocks (verified 2026-07-16)
+
+- Microsoft Presidio — MIT; analyzer + anonymizer with `encrypt` operator and
+  `DeanonymizeEngine` (reversible pseudonymization; key held hospital-side).
+  <https://github.com/microsoft/presidio>
+- OpenMed — Apache-2.0; 380+ medical NER models + on-device PHI de-identification;
+  Python toolkit on PyPI (`openmed`). <https://openmed.life/> ·
+  <https://huggingface.co/papers/2508.01630>
+- medspaCy (clinical spaCy) and Philter (hybrid clinical de-id) — alternatives to
+  benchmark per site. Recent reviews: healthcare-specific models lead on recall,
+  the safety-critical metric for PHI.

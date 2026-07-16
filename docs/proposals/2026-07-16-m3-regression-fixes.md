@@ -37,10 +37,34 @@ branches on `judge_spec.kind` and references an unimplemented
   SUTs). A judge-graded run is excluded from a regression *baseline* unless its
   grades are frozen (recorded). This mirrors the SUT record/replay rule.
 
+**Don't reinvent the judging metrics — hook into maintained OSS.**
+
+- **DeepEval** (Apache-2.0) — a local-first LLM-eval framework. It runs
+  LLM-as-judge metrics **locally with a custom/local judge model** (not tied to
+  OpenAI), and its cloud platform (Confident AI) is **opt-in only** — no data
+  leaves the node unless a user runs `deepeval login`. For PHI-never-leaves,
+  document "do not authenticate, disable telemetry" as a deployment control.
+  Its **G-Eval** metric is the strongest fit: you write criteria, inspect the
+  generated `evaluation_steps`, then **lock them in** for reproducible scores —
+  which is exactly our judge-pinning discipline. Pin the G-Eval `evaluation_steps`
+  + judge model id/version into `Pins`; a change to either is a revalidation event.
+- **Inspect** (`inspect_ai`, MIT) — worth adopting when M4 lands: it is built for
+  reproducible, tool-using-agent evaluation and log-based replay, aligning with
+  our agent-SUT and determinism goals.
+- **RAGAS** — reference-free RAG metrics, for chain/RAG SUTs.
+
+**Architecture: library behind our `Judge` ABC, control stays here.** The harness
+keeps the pinning, the run store, and the determinism spine; DeepEval/G-Eval is an
+optional *grading backend* behind `Judge.grade_item`, not a replacement engine —
+otherwise we lose our versioning discipline. Keep it behind an optional extra
+(`pip install harness-factory[judge]`) so the core stays thin.
+
 **Verification.** Unit-test `LLMJudge` request/response mapping with
-`httpx.MockTransport` (exactly as `test_sut_openai_compat.py` does). Add a diff
-test: two runs identical except `judge_version` produce different run ids and a
-RegressionDiff that attributes the score change to the judge, not the SUT.
+`httpx.MockTransport` (exactly as `test_sut_openai_compat.py` does). For a
+DeepEval-backed judge, test with a stubbed local model so CI stays offline. Add a
+diff test: two runs identical except `judge_version` (or the pinned G-Eval steps)
+produce different run ids and a RegressionDiff that attributes the score change to
+the judge, not the SUT.
 
 ---
 
@@ -105,9 +129,19 @@ threshold → report blocked. Assert the QMS V&V report reflects
 
 | Surface | Change |
 |---|---|
-| `harness/judge/llm.py` | new — pinned OpenAI-compatible judge |
-| `judge.yaml` | add `grading_prompts` per item type |
+| `harness/judge/llm.py` | new — pinned OpenAI-compatible judge; optional DeepEval/G-Eval backend behind an extra |
+| `pyproject.toml` | optional `judge` extra (deepeval / inspect_ai) |
+| `judge.yaml` | add `grading_prompts` per item type; optional pinned G-Eval `evaluation_steps` |
 | `harness/calibration/{sample,agreement,gate}.py` | new module |
 | `acceptance.yaml` | add `judge_agreement_kappa_min` |
 | `harness/artifacts/report.py` | replace `human_agreement` placeholder with real stats + gate |
 | `harness/diff.py` | add `calibration` delta block |
+
+## Open-source building blocks (verified 2026-07-16)
+
+- DeepEval — Apache-2.0, local-first LLM-as-judge, custom/local judge models,
+  cloud opt-in only; G-Eval supports lockable `evaluation_steps`.
+  <https://github.com/confident-ai/deepeval>
+- Inspect (`inspect_ai`) — MIT, reproducible agent/tool evaluation.
+  <https://github.com/UKGovernmentBEIS/inspect_ai>
+- RAGAS — RAG evaluation metrics. <https://github.com/explodinggradients/ragas>
