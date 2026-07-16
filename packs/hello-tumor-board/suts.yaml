@@ -13,3 +13,18 @@ suts:
         clinical TNM stage, each with supporting evidence.
       params:
         temperature: 0
+  - id: fake-regressed
+    kind: llm_call
+    binding:
+      model_id: fake
+      model_version: "2"
+      system_prompt: >
+        You summarize an oncology record into a structured tumor-board brief,
+        stating the histological diagnosis, actionable molecular alteration, and
+        clinical TNM stage, each with supporting evidence.
+      params:
+        temperature: 0
+        # Simulated regression: this "newer" model version has stopped reporting
+        # molecular findings. Regression testing must surface this precisely.
+        suppress: ["EGFR", "HER2", "KRAS"]
+

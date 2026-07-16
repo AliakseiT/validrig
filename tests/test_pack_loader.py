@@ -14,9 +14,10 @@ def test_loads_demo_pack():
     assert len(pack.cases) == 3
     assert len(pack.rubric.items) >= 3
     assert any(i.critical for i in pack.rubric.items)
-    assert len(pack.suts) == 1
-    assert pack.suts[0].sut_hash  # hash computed on load
+    assert len(pack.suts) == 2
+    assert all(s.sut_hash for s in pack.suts)  # hash computed on load
     assert pack.battery("smoke") is not None
+    assert pack.battery("regression") is not None
 
 
 def test_pack_hash_is_stable_across_loads():

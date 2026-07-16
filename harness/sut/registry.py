@@ -20,6 +20,7 @@ def build_adapter(spec: SUTSpec) -> SUTAdapter:
         return FakeModel(
             system_prompt=binding.system_prompt,
             model_version=binding.model_version,
+            suppress=binding.params.get("suppress"),
         )
     if spec.kind == "llm_call":
         # Imported lazily so offline runs never need httpx configured.

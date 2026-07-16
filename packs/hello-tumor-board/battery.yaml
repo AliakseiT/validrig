@@ -5,3 +5,11 @@ batteries:
     perturbations: all
     suts: ["fake-baseline"]
     n_samples: 1
+  # Runs the baseline and the regressed model on the same pinned inputs so their
+  # two runs can be compared with a RegressionDiff.
+  - id: regression
+    version: "1"
+    cases: all
+    perturbations: all
+    suts: ["fake-baseline", "fake-regressed"]
+    n_samples: 1

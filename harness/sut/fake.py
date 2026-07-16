@@ -50,13 +50,27 @@ def _salient_lines(document: str) -> list[str]:
 class FakeModel(SUTAdapter):
     reproducible = True
 
-    def __init__(self, system_prompt: str | None, model_version: str) -> None:
+    def __init__(
+        self,
+        system_prompt: str | None,
+        model_version: str,
+        suppress: list[str] | None = None,
+    ) -> None:
         self.system_prompt = system_prompt or ""
         self.model_version = model_version
+        # Optional list of substrings; any finding line containing one is
+        # dropped from the output. This lets a pack configure a deliberately
+        # degraded model (e.g. one that "stopped reporting molecular findings")
+        # for regression testing — the tokens are pack content, not engine logic.
+        self.suppress = [s.lower() for s in (suppress or [])]
+
+    def _keep(self, line: str) -> bool:
+        low = line.lower()
+        return not any(marker in low for marker in self.suppress)
 
     def generate(self, document: str, seed: int) -> GenerationOutput:
-        signature = content_hash((document, self.system_prompt, seed))[:12]
-        findings = _salient_lines(document)
+        signature = content_hash((document, self.system_prompt, seed, tuple(self.suppress)))[:12]
+        findings = [line for line in _salient_lines(document) if self._keep(line)]
         body = "\n".join(f"- {line}" for line in findings)
         raw_output = (
             "STRUCTURED SUMMARY (synthetic model output)\n"

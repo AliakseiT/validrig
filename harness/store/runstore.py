@@ -80,6 +80,20 @@ class RunStore:
             rows = conn.execute("SELECT run_id FROM runs ORDER BY run_id").fetchall()
         return [r[0] for r in rows]
 
+    # ---- derived artifacts ------------------------------------------------
+
+    def read_contract(self, run_id: str) -> dict | None:
+        path = self.runs_dir / run_id / "contract.json"
+        if not path.exists():
+            return None
+        return json.loads(path.read_text(encoding="utf-8"))
+
+    def read_report(self, run_id: str) -> dict | None:
+        path = self.runs_dir / run_id / "validation_report.json"
+        if not path.exists():
+            return None
+        return json.loads(path.read_text(encoding="utf-8"))
+
     # ---- generations ------------------------------------------------------
 
     def _gen_path(self, run_id: str) -> Path:
