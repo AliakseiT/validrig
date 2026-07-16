@@ -1,5 +1,7 @@
-# The perturbation grid. Each axis lists named levels; the engine expands a
-# battery by applying the baseline plus each single-axis level to every case.
+# The perturbation grid. Each axis lists named levels; the engine composes the
+# axes in declaration order. Mutation axes that change element *content*
+# (ablation, language) must be declared before the rendering axis (format), so
+# that format renders the already-perturbed elements into the final document.
 axes:
   ablation:
     - id: baseline
@@ -12,6 +14,11 @@ axes:
       drop: ["pathology_report"]
     - id: no_context
       drop: ["prior_notes", "meds"]
+  language:
+    - id: en
+      lang: en
+    - id: de
+      lang: de
   format:
     - id: structured
       style: structured

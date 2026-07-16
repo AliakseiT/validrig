@@ -48,6 +48,10 @@ class Case(_Frozen):
     case_id: str
     elements: dict[str, Any]
     ground_truth: dict[str, Any] = Field(default_factory=dict)
+    # Optional pre-translated element variants: language code -> {element: text}.
+    # Prepared and human-checked at pack build; the language axis selects among
+    # them. Absent translations fall back to the original element text.
+    translations: dict[str, dict[str, str]] = Field(default_factory=dict)
 
 
 class RubricItem(_Frozen):
@@ -83,6 +87,10 @@ class BatterySpec(_Frozen):
     version: str
     cases: Union[list[str], Literal["all"]] = "all"
     perturbations: Union[list[str], Literal["all"]] = "all"
+    # Which perturbation axes participate in this battery. Restricting the axes
+    # is how a battery bounds its cartesian expansion (e.g. a robustness battery
+    # uses ablation+format; a multilingual battery uses language+format).
+    axes: Union[list[str], Literal["all"]] = "all"
     suts: list[str]
     n_samples: int = 1
 

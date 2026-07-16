@@ -43,11 +43,20 @@ def _selected_cases(pack: Pack, battery: BatterySpec) -> list[Case]:
     return [c for c in sorted(pack.cases, key=lambda c: c.case_id) if c.case_id in wanted]
 
 
-def _perturbed_states(pack: Pack, case: Case) -> list[PerturbedCase]:
-    """Cartesian product of all declared axis levels for one case."""
+def _selected_axes(pack: Pack, battery: BatterySpec) -> list[tuple[str, list]]:
+    """Declared axes that this battery includes, in declaration order."""
+    all_axes = list(pack.perturbations.axes.items())
+    if battery.axes == "all":
+        return all_axes
+    wanted = set(battery.axes)
+    return [(name, levels) for name, levels in all_axes if name in wanted]
+
+
+def _perturbed_states(pack: Pack, battery: BatterySpec, case: Case) -> list[PerturbedCase]:
+    """Cartesian product of the battery's selected axis levels for one case."""
     schema = pack.case_schema
     states = [PerturbedCase(perturbation_id="", case=case, provenance={})]
-    for axis_name, levels in pack.perturbations.axes.items():
+    for axis_name, levels in _selected_axes(pack, battery):
         transformer = get_transformer(axis_name)
         next_states: list[PerturbedCase] = []
         for state in states:
@@ -90,7 +99,7 @@ def expand_battery(pack: Pack, battery: BatterySpec) -> list[ExpansionUnit]:
     seen: set[tuple[str, str, int, str]] = set()
 
     for case in _selected_cases(pack, battery):
-        for state in _perturbed_states(pack, case):
+        for state in _perturbed_states(pack, battery, case):
             if not _perturbation_selected(state.perturbation_id, battery):
                 continue
             document = _ensure_document(pack, state)

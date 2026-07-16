@@ -43,3 +43,15 @@ def test_ablation_provenance_is_recorded():
     }
     assert ("molecular_report",) in dropped_seen
     assert () in dropped_seen  # baseline
+
+
+def test_battery_axis_scoping_bounds_expansion():
+    pack = load_pack(PACK)
+    # smoke restricts to ablation+format, so the language axis never enters it
+    smoke_units = expand_battery(pack, pack.battery("smoke"))
+    assert all("language" not in u.perturbation_id for u in smoke_units)
+    # multilingual restricts to language+format for one case: 2 langs x 3 formats
+    ml_units = expand_battery(pack, pack.battery("multilingual"))
+    assert len(ml_units) == 6
+    assert all(u.case_id == "C001" for u in ml_units)
+    assert all("language" in u.perturbation_id for u in ml_units)

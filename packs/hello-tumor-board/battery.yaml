@@ -3,6 +3,7 @@ batteries:
     version: "1"
     cases: all
     perturbations: all
+    axes: ["ablation", "format"]
     suts: ["fake-baseline"]
     n_samples: 1
   # Runs the baseline and the regressed model on the same pinned inputs so their
@@ -11,5 +12,14 @@ batteries:
     version: "1"
     cases: all
     perturbations: all
+    axes: ["ablation", "format"]
     suts: ["fake-baseline", "fake-regressed"]
+    n_samples: 1
+  # Characterizes language sensitivity: the same case in EN and DE across formats.
+  - id: multilingual
+    version: "1"
+    cases: ["C001"]
+    perturbations: all
+    axes: ["language", "format"]
+    suts: ["fake-baseline"]
     n_samples: 1

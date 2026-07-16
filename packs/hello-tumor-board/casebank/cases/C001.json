@@ -11,5 +11,14 @@
     "item_diagnosis": {"evidence": ["invasive adenocarcinoma"], "expected": true},
     "item_molecular": {"evidence": ["EGFR"], "expected": true},
     "item_staging": {"evidence": ["cT2N1M0"], "expected": true}
+  },
+  "translations": {
+    "de": {
+      "pathology_report": "CHIRURGISCHE PATHOLOGIE (synthetisch, maschinell übersetzt). Keilbiopsie rechter Oberlappen. Mikroskopie: invasives Adenokarzinom der Lunge, azinär prädominant, histologischer Grad 2. Resektionsränder frei. Lymphgefäßinvasion vorhanden.",
+      "molecular_report": "NGS-PANEL (synthetisch, maschinell übersetzt). Ergebnis: EGFR-Exon-19-Deletion (p.E746_A750del) nachgewiesen, Varianten-Allelfrequenz 32%. Keine ALK/ROS1-Fusion. PD-L1 TPS 10%.",
+      "imaging_text": "CT THORAX (synthetisch, maschinell übersetzt). 2,4 cm spikulierter Rundherd rechter Oberlappen. Ipsilateraler hilärer Lymphknoten 1,5 cm. Keine Fernmetastasen. Klinisches Stadium cT2N1M0.",
+      "prior_notes": "Onkologische Ambulanznotiz (synthetisch, maschinell übersetzt). 61-jähriger ehemaliger Raucher, ECOG 1. Persistierender Husten. Keine vorherige systemische Therapie.",
+      "meds": "Aktuelle Medikation (synthetisch, maschinell übersetzt): Lisinopril 10 mg täglich; Atorvastatin 20 mg zur Nacht."
+    }
   }
 }
