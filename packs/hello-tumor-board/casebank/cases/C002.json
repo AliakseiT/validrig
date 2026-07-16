@@ -1,0 +1,15 @@
+{
+  "case_id": "C002",
+  "elements": {
+    "pathology_report": "SURGICAL PATHOLOGY (synthetic). Left breast core biopsy. Microscopy: invasive ductal carcinoma, Nottingham grade 3. ER negative, PR negative.",
+    "molecular_report": "IHC/ISH (synthetic). Result: HER2 amplification confirmed by ISH (ratio 4.1). Ki-67 45%.",
+    "imaging_text": "MAMMOGRAPHY and MRI (synthetic). 1.8 cm irregular mass upper outer quadrant. No axillary adenopathy. Clinical stage cT1cN0M0.",
+    "prior_notes": "Breast clinic note (synthetic). 48-year-old, ECOG 0. Screen-detected lesion. No prior treatment.",
+    "meds": "Current medications (synthetic): none regular."
+  },
+  "ground_truth": {
+    "item_diagnosis": {"evidence": ["invasive ductal carcinoma"], "expected": true},
+    "item_molecular": {"evidence": ["HER2"], "expected": true},
+    "item_staging": {"evidence": ["cT1cN0M0"], "expected": true}
+  }
+}

@@ -1,0 +1,5 @@
+# Pre-registered acceptance thresholds. Interpreted by the ValidationReport:
+#   *_max metrics must be <= threshold; *_min metrics must be >= threshold.
+thresholds:
+  critical_omission_rate_max: 0.10
+  mean_score_min: 0.60

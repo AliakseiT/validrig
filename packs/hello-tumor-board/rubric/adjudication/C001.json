@@ -1,0 +1,10 @@
+{
+  "case_id": "C001",
+  "adjudicated_by": "synthetic-panel",
+  "adjudicated_at": "2026-07-15",
+  "values": {
+    "item_diagnosis": 1.0,
+    "item_molecular": 1.0,
+    "item_staging": 1.0
+  }
+}

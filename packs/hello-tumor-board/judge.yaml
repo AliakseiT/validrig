@@ -1,0 +1,7 @@
+id: fake-judge
+version: "1"
+kind: fake
+binding: {}
+# Fraction of generations to sample for physician double-grading (calibration).
+# Wired into the schema now; the review UI arrives in M2.
+calibration_fraction: 0.1

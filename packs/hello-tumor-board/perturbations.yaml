@@ -1,0 +1,21 @@
+# The perturbation grid. Each axis lists named levels; the engine expands a
+# battery by applying the baseline plus each single-axis level to every case.
+axes:
+  ablation:
+    - id: baseline
+      drop: []
+    - id: no_molecular
+      drop: ["molecular_report"]
+    - id: no_imaging
+      drop: ["imaging_text"]
+    - id: no_pathology
+      drop: ["pathology_report"]
+    - id: no_context
+      drop: ["prior_notes", "meds"]
+  format:
+    - id: structured
+      style: structured
+    - id: raw_dump
+      style: raw_dump
+    - id: tabular
+      style: tabular

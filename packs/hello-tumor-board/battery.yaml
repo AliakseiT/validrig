@@ -1,0 +1,7 @@
+batteries:
+  - id: smoke
+    version: "1"
+    cases: all
+    perturbations: all
+    suts: ["fake-baseline"]
+    n_samples: 1

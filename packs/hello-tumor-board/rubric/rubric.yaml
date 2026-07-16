@@ -1,0 +1,32 @@
+items:
+  - id: item_diagnosis
+    statement: >
+      The brief states the histological diagnosis supported by the pathology report.
+    type: binary
+    critical: true
+    evidence_required: true
+    grading_instructions: >
+      Score 1.0 if the output names the histological diagnosis matching the
+      adjudicated evidence for this case; otherwise 0.0. Missing the diagnosis is
+      a critical omission.
+    max_score: 1.0
+  - id: item_molecular
+    statement: >
+      The brief reports the actionable molecular alteration from the molecular report.
+    type: binary
+    critical: false
+    evidence_required: true
+    grading_instructions: >
+      Score 1.0 if the output names the molecular alteration matching the adjudicated
+      evidence for this case; otherwise 0.0.
+    max_score: 1.0
+  - id: item_staging
+    statement: >
+      The brief provides the clinical TNM stage supported by the imaging text.
+    type: binary
+    critical: false
+    evidence_required: true
+    grading_instructions: >
+      Score 1.0 if the output states the clinical stage matching the adjudicated
+      evidence for this case; otherwise 0.0.
+    max_score: 1.0

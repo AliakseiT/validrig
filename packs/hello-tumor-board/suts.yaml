@@ -1,0 +1,15 @@
+# Systems under test. The demo uses the deterministic fake model so the pack
+# runs fully offline and reproducibly. A real pack would add openai_compat or
+# local vLLM bindings here.
+suts:
+  - id: fake-baseline
+    kind: llm_call
+    binding:
+      model_id: fake
+      model_version: "1"
+      system_prompt: >
+        You summarize an oncology record into a structured tumor-board brief,
+        stating the histological diagnosis, actionable molecular alteration, and
+        clinical TNM stage, each with supporting evidence.
+      params:
+        temperature: 0

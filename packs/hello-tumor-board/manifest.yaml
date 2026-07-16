@@ -1,0 +1,16 @@
+id: hello-tumor-board
+version: "0.1.0"
+intended_use: >
+  Synthetic demonstration pack. Assist a molecular tumor board by summarizing the
+  key diagnostic, molecular, and staging findings from a patient's oncology record
+  into a structured board-ready brief. FOR HARNESS DEMONSTRATION ONLY — synthetic,
+  PHI-free data; not a clinical device and not for clinical use.
+device_status_rationale: >
+  Not placed on the market and not put into service for a clinical purpose in this
+  demo configuration; used solely to exercise the evaluation engine on synthetic
+  data. A real deployment would require an in-house-device rationale under MDR
+  Art. 5(5) and AI Act deployer obligations.
+population: >
+  Synthetic adult solid-tumor oncology cases (lung/breast archetypes), German- and
+  English-language source documents.
+languages: ["en"]

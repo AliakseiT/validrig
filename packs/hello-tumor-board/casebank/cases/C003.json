@@ -1,0 +1,15 @@
+{
+  "case_id": "C003",
+  "elements": {
+    "pathology_report": "SURGICAL PATHOLOGY (synthetic). Sigmoid colon resection. Microscopy: moderately differentiated colorectal adenocarcinoma invading through muscularis propria into subserosa. 2 of 14 nodes positive.",
+    "molecular_report": "NGS PANEL (synthetic). Result: KRAS G12D mutation detected. Microsatellite stable (MSS). BRAF wild-type.",
+    "imaging_text": "CT ABDOMEN (synthetic). Sigmoid wall thickening. Regional nodes borderline. No liver lesions. Clinical stage cT3N1M0.",
+    "prior_notes": "GI oncology note (synthetic). 67-year-old, ECOG 1. Iron-deficiency anemia on workup. No prior chemotherapy.",
+    "meds": "Current medications (synthetic): metformin 1000 mg twice daily; ferrous sulfate."
+  },
+  "ground_truth": {
+    "item_diagnosis": {"evidence": ["colorectal adenocarcinoma"], "expected": true},
+    "item_molecular": {"evidence": ["KRAS"], "expected": true},
+    "item_staging": {"evidence": ["cT3N1M0"], "expected": true}
+  }
+}

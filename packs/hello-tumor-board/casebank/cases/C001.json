@@ -1,0 +1,15 @@
+{
+  "case_id": "C001",
+  "elements": {
+    "pathology_report": "SURGICAL PATHOLOGY (synthetic). Right upper lobe wedge biopsy. Microscopy: invasive adenocarcinoma of the lung, acinar predominant, histologic grade 2. Margins negative. Lymphovascular invasion present.",
+    "molecular_report": "NGS PANEL (synthetic). Result: EGFR exon 19 deletion (p.E746_A750del) detected, variant allele fraction 32%. No ALK/ROS1 fusion. PD-L1 TPS 10%.",
+    "imaging_text": "CT CHEST (synthetic). 2.4 cm spiculated nodule right upper lobe. Ipsilateral hilar node 1.5 cm. No distant metastasis. Clinical stage cT2N1M0.",
+    "prior_notes": "Oncology clinic note (synthetic). 61-year-old former smoker, ECOG 1. Presented with persistent cough. No prior systemic therapy.",
+    "meds": "Current medications (synthetic): lisinopril 10 mg daily; atorvastatin 20 mg nightly."
+  },
+  "ground_truth": {
+    "item_diagnosis": {"evidence": ["invasive adenocarcinoma"], "expected": true},
+    "item_molecular": {"evidence": ["EGFR"], "expected": true},
+    "item_staging": {"evidence": ["cT2N1M0"], "expected": true}
+  }
+}

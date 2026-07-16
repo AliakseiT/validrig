@@ -1,0 +1,31 @@
+elements:
+  - name: pathology_report
+    type: text
+    modality: pathology
+    language: en
+    source_system: LIS
+    required: true
+  - name: molecular_report
+    type: text
+    modality: genomics
+    language: en
+    source_system: NGS-pipeline
+    required: true
+  - name: imaging_text
+    type: text
+    modality: radiology
+    language: en
+    source_system: RIS
+    required: true
+  - name: prior_notes
+    type: text
+    modality: clinical_note
+    language: en
+    source_system: EHR
+    required: false
+  - name: meds
+    type: text
+    modality: medication
+    language: en
+    source_system: EHR
+    required: false
