@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+runs/
+*.parquet
+*.sqlite
+.DS_Store
+.pytest_cache/
