@@ -3,6 +3,17 @@ axes:
   ablation:
     - id: baseline
       drop: []
+  tool_availability:
+    - id: full
+      remove: []
+    - id: no_molecular_tool
+      remove: ["molecular_lookup"]
+  tool_response:
+    - id: normal
+      mode: normal
+    - id: molecular_error
+      tool: molecular_lookup
+      mode: error
   format:
     - id: structured
       style: structured

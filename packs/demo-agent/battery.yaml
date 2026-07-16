@@ -6,3 +6,12 @@ batteries:
     axes: ["ablation", "format"]
     suts: ["agent-full", "agent-lazy"]
     n_samples: 1
+  # Agent robustness: does the full agent still complete the process when its
+  # tool is removed or its response is degraded?
+  - id: agent_robustness
+    version: "1"
+    cases: all
+    perturbations: all
+    axes: ["tool_availability", "tool_response", "format"]
+    suts: ["agent-full"]
+    n_samples: 1

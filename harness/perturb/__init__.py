@@ -15,11 +15,14 @@ from harness.perturb.base import (
 )
 from harness.perturb.format import FormatTransformer
 from harness.perturb.language import LanguageTransformer
+from harness.perturb.tools import ToolAvailabilityTransformer, ToolResponseTransformer
 
 # Register built-in axes on import.
 register(AblationTransformer())
 register(FormatTransformer())
 register(LanguageTransformer())
+register(ToolAvailabilityTransformer())
+register(ToolResponseTransformer())
 
 __all__ = [
     "PerturbedCase",
@@ -29,4 +32,6 @@ __all__ = [
     "AblationTransformer",
     "FormatTransformer",
     "LanguageTransformer",
+    "ToolAvailabilityTransformer",
+    "ToolResponseTransformer",
 ]

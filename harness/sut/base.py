@@ -26,11 +26,14 @@ class GenerationOutput:
 class SUTContext:
     """Per-unit context an adapter may need beyond the document.
 
-    Notably ``case_id``, which agent adapters use to look up recorded tool mocks.
-    Plain LLM adapters ignore it.
+    ``case_id`` lets agent adapters look up recorded tool mocks.
+    ``tool_perturbation`` (optional) describes agent-axis perturbations for this
+    unit — which tools are unavailable, or a degraded response for one tool.
+    Plain LLM adapters ignore both.
     """
 
     case_id: str
+    tool_perturbation: dict | None = None
 
 
 class SUTAdapter(ABC):

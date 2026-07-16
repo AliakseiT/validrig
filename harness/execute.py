@@ -63,6 +63,19 @@ def _utc_now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
+def _tool_perturbation(provenance: dict) -> dict | None:
+    """Translate agent-axis provenance into the per-unit tool perturbation an
+    agent adapter applies (unavailable tools, degraded tool response)."""
+    unavailable = provenance.get("tool_availability", {}).get("removed", [])
+    resp = provenance.get("tool_response") or {}
+    response = None
+    if resp.get("mode") not in (None, "normal") and resp.get("tool"):
+        response = {"tool": resp["tool"], "mode": resp["mode"]}
+    if not unavailable and response is None:
+        return None
+    return {"unavailable": unavailable, "response": response}
+
+
 def _grading_case(pack: Pack, unit: ExpansionUnit) -> Case:
     """A minimal case for grading: the rendered document + adjudicated truth."""
     source = pack.case(unit.case_id)
@@ -110,7 +123,11 @@ def run_battery(
         total_usage = TokenUsage.zero()
 
         for unit in sut_units:
-            out = adapter.generate(unit.document, seed, context=SUTContext(case_id=unit.case_id))
+            context = SUTContext(
+                case_id=unit.case_id,
+                tool_perturbation=_tool_perturbation(unit.provenance),
+            )
+            out = adapter.generate(unit.document, seed, context=context)
             gen = Generation(
                 case_id=unit.case_id,
                 perturbation_id=unit.perturbation_id,

@@ -43,23 +43,40 @@ class FakeAgent(SUTAdapter):
         self, document: str, seed: int, context: SUTContext | None = None
     ) -> GenerationOutput:
         case_id = context.case_id if context is not None else ""
+        perturbation = (context.tool_perturbation if context is not None else None) or {}
+        unavailable = set(perturbation.get("unavailable", []))
+        response_pert = perturbation.get("response") or {}
+
         steps: list[Step] = []
         for tool in self.tools_to_call:
             args = {"case_id": case_id}
             args_hash = tool_args_hash(args)
+            base = {"args": args, "args_hash": args_hash}
+
+            if tool in unavailable:
+                # tool-availability perturbation: the tool is gone.
+                steps.append(Step(name=tool, content="", data={
+                    **base, "result": None, "error": "tool unavailable (perturbation)"}))
+                continue
+
+            if response_pert.get("tool") == tool and response_pert.get("mode") not in (None, "normal"):
+                # tool-response perturbation: degrade this tool's response.
+                mode = response_pert["mode"]
+                if mode == "error":
+                    steps.append(Step(name=tool, content="", data={
+                        **base, "result": None, "error": "tool error (perturbation)"}))
+                else:  # "empty"
+                    steps.append(Step(name=tool, content="", data={
+                        **base, "result": "", "error": None}))
+                continue
+
             mock = self.mock_store.get(case_id, tool, args)
             if mock is None:
-                steps.append(Step(
-                    name=tool, content="",
-                    data={"args": args, "args_hash": args_hash, "result": None,
-                          "error": "no mock recorded for this tool call"},
-                ))
+                steps.append(Step(name=tool, content="", data={
+                    **base, "result": None, "error": "no mock recorded for this tool call"}))
             else:
-                steps.append(Step(
-                    name=tool, content=str(mock.get("result", "")),
-                    data={"args": args, "args_hash": args_hash,
-                          "result": mock.get("result"), "error": mock.get("error")},
-                ))
+                steps.append(Step(name=tool, content=str(mock.get("result", "")), data={
+                    **base, "result": mock.get("result"), "error": mock.get("error")}))
 
         # Output echoes the salient document content — findings are present
         # whether or not the corresponding tool was actually called.
