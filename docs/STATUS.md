@@ -82,7 +82,9 @@ python3.12 -m venv .venv && .venv/bin/pip install -e ".[dev]"
 
 - Plan: `docs/superpowers/plans/2026-07-16-harness-factory-m1.md`
 - Engine: `harness/` — `models/`, `packio/`, `perturb/`, `sut/`, `judge/`,
-  `store/`, `stats/`, `artifacts/`, `execute.py`, `diff.py`, `cli.py`
-- Demo pack: `packs/demo-tumor-board/`
+  `store/`, `stats/`, `artifacts/`, `calibration/`, `agent/`, `qms/`,
+  `authoring/`, `ui/`, `execute.py`, `diff.py`, `cli.py`
+- Demo packs: `packs/demo-tumor-board/` (LLM), `packs/demo-agent/` (tool-using agent)
 - Tests: `tests/` (one file per subsystem + integration gates)
-- Git: local commits per task; nothing pushed.
+- Repo: `github.com/AliakseiT/clinical-llm-eval-engine` (private); commits authored
+  as the AliakseiT noreply identity, no Claude attribution.
