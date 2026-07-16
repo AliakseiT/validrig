@@ -38,7 +38,11 @@ def _cmd_diff(args: argparse.Namespace) -> int:
     store = RunStore(args.out)
     diff = diff_runs(store, args.baseline, args.candidate)
 
-    out_path = store.runs_dir / args.candidate / "regression_diff.json"
+    # A diff is a fact about a pair of runs, not about one run, so it lives in a
+    # neutral diffs/ directory rather than inside either run's immutable record.
+    diffs_dir = store.root / "diffs"
+    diffs_dir.mkdir(parents=True, exist_ok=True)
+    out_path = diffs_dir / f"{args.baseline}__{args.candidate}.json"
     out_path.write_text(json.dumps(diff, indent=2, sort_keys=True), encoding="utf-8")
 
     agg = diff["aggregate"]

@@ -9,7 +9,7 @@ granularity — not merely as an aggregate score drop.
 
 from pathlib import Path
 
-from harness.diff import diff_runs
+from harness.diff import diff_contracts, diff_runs
 from harness.execute import run_battery
 from harness.packio.loader import load_pack
 from harness.store.runstore import RunStore
@@ -71,6 +71,27 @@ def test_aggregate_regression_is_significant(tmp_path):
     assert agg["mean_score_candidate"] < agg["mean_score_baseline"]
     assert agg["delta"] < 0
     assert agg["significant"] is True
+
+
+def test_diff_contracts_flags_coverage_transitions():
+    # measured-set depends on (pack, battery) ablation coverage, not the SUT, so
+    # a coverage change (changed battery / pack version) is where the null-fix
+    # actually changes the diff outcome. diff_contracts is a pure dict function.
+    base = {"elements": [{"name": "x", "measured": True, "information_value": 0.0}]}
+    cand = {"elements": [{"name": "x", "measured": False, "information_value": None}]}
+    [d] = diff_contracts(base, cand)
+    assert d["status"] == "no_longer_measured"
+    assert d["delta"] is None
+
+    [rev] = diff_contracts(cand, base)
+    assert rev["status"] == "newly_measured"
+    assert rev["delta"] is None
+
+    [both] = diff_contracts(
+        {"elements": [{"name": "x", "measured": False, "information_value": None}]},
+        {"elements": [{"name": "x", "measured": False, "information_value": None}]},
+    )
+    assert both["status"] == "unmeasured_both"
 
 
 def test_identical_runs_show_no_regression(tmp_path):
