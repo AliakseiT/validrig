@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** M1 engine core per the Harness Factory design doc: pack loader, casebank, LLM-call SUT adapter, ablation+format perturbation axes, judge grading, run store, basic stats — demonstrated end-to-end on a synthetic `hello-tumor-board` pack with zero network calls.
+**Goal:** M1 engine core per the Harness Factory design doc: pack loader, casebank, LLM-call SUT adapter, ablation+format perturbation axes, judge grading, run store, basic stats — demonstrated end-to-end on a synthetic `demo-tumor-board` pack with zero network calls.
 
 **Architecture:** A Python package `harness_factory` where all use-case content lives in declarative YAML/JSON "packs" (pydantic-validated), and the engine is a pipeline: `pack load → battery expand → execute (SUT adapters) → grade (judge) → analyze → report`. Results are immutable files (SQLite index + parquet tables) under `runs/<run_id>/`. Everything is deterministic and pinned: pack content hash, SUT snapshot, battery version, judge version, seed.
 
@@ -13,7 +13,7 @@
 - Python `>=3.12`; interpreter at `/opt/homebrew/bin/python3.12`; venv at `factory/.venv`.
 - Runtime deps ONLY: `pydantic>=2`, `pyyaml`, `httpx`, `pyarrow`, `numpy`. Dev deps: `pytest`, `pytest-asyncio`. No pandas, no click, no server DB.
 - Every `.py` file starts with the two-line AGPL header comment (defined in Task 1).
-- Engine code contains **zero** use-case logic — anything tumor-board-specific lives only under `packs/hello-tumor-board/`.
+- Engine code contains **zero** use-case logic — anything tumor-board-specific lives only under `packs/demo-tumor-board/`.
 - Results are append-only/immutable: the engine never mutates or deletes files inside an existing `runs/<run_id>/`.
 - All randomness flows from explicit seeds (battery `seed`); no wall-clock in any computed artifact except run timestamps recorded in `run.json`.
 - Package layout: `src/harness_factory/`; CLI entrypoint `hf = harness_factory.cli:main`.
@@ -55,7 +55,7 @@ factory/
 │   ├── store.py                     # RunStore: runs/<id>/{run.json, generations.parquet, grades.parquet} + SQLite index
 │   ├── stats.py                     # scores, info-value curves, critical rates, bootstrap CI, acceptance check
 │   └── cli.py                       # hf validate-pack | run | report
-├── packs/hello-tumor-board/         # synthetic fixture pack (also documentation)
+├── packs/demo-tumor-board/         # synthetic fixture pack (also documentation)
 │   ├── manifest.yaml
 │   ├── casebank/schema.yaml
 │   ├── casebank/cases/*.json        # 4 synthetic cases
@@ -81,7 +81,7 @@ factory/
     ├── test_store.py
     ├── test_judge.py
     ├── test_stats.py
-    └── test_e2e.py                  # full pipeline on hello-tumor-board, golden assertions
+    └── test_e2e.py                  # full pipeline on demo-tumor-board, golden assertions
 ```
 
 ## Core interfaces (single source of truth for all tasks)
@@ -333,10 +333,10 @@ def test_content_hash_changes_when_case_edited(tmp_path): ...
 ```
 - [ ] Step 2: pytest → FAIL. Step 3: implement. Step 4: PASS. Step 5: Commit `feat: pack loader with cross-validation and content hash`
 
-### Task 4: hello-tumor-board demo pack
+### Task 4: demo-tumor-board demo pack
 
 **Files:**
-- Create: everything under `packs/hello-tumor-board/` and `suts/mock-tumor-board.yaml`
+- Create: everything under `packs/demo-tumor-board/` and `suts/mock-tumor-board.yaml`
 - Test: `tests/conftest.py` (fixture `demo_pack` returning loaded pack), extend `tests/test_pack_loader.py` with `test_demo_pack_loads()`
 
 **Content (synthetic, English + one German element to exercise metadata):**

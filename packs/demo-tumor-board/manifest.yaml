@@ -1,4 +1,4 @@
-id: hello-tumor-board
+id: demo-tumor-board
 version: "0.1.0"
 intended_use: >
   Synthetic demonstration pack. Assist a molecular tumor board by summarizing the

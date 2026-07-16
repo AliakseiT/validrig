@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build the M1 engine core of the Harness Factory: a pack loader, casebank, LLM-call SUT adapter (with a deterministic fake model), ablation + format perturbation axes, judge grading, an append-only run store, basic stats, and a synthetic `hello-tumor-board` pack that runs end-to-end offline and reproducibly.
+**Goal:** Build the M1 engine core of the Harness Factory: a pack loader, casebank, LLM-call SUT adapter (with a deterministic fake model), ablation + format perturbation axes, judge grading, an append-only run store, basic stats, and a synthetic `demo-tumor-board` pack that runs end-to-end offline and reproducibly.
 
 **Architecture:** A Python package (`harness`) with a strict separation between *engine code* (use-case-agnostic) and *content* (declarative, versioned packs). The engine treats every system-under-test as an opaque `SystemUnderTest` producing traces. Results (Run/Generation/Grade) are immutable, fully version-pinned records persisted to SQLite (metadata) + parquet (generations/grades). A deterministic fake model makes the whole pipeline runnable and testable offline; the real OpenAI-compatible adapter is built to the same interface and unit-tested with a mocked transport. Determinism is proven by a test that runs the demo pack twice and asserts content (excluding timestamps/env-hash) is byte-identical.
 
@@ -80,7 +80,7 @@ factory/
 │   ├── execute.py              # orchestration: expand → generate → grade → store
 │   └── cli.py                  # `harness run <pack> ...`
 ├── packs/
-│   └── hello-tumor-board/      # synthetic demo pack (CONTENT, not engine)
+│   └── demo-tumor-board/      # synthetic demo pack (CONTENT, not engine)
 │       ├── manifest.yaml
 │       ├── casebank/{schema.yaml, cases/*.json}
 │       ├── rubric/{rubric.yaml, adjudication/*.json}
@@ -193,18 +193,18 @@ factory/
 
 **Files:**
 - Create: `harness/packio/__init__.py`, `harness/packio/loader.py`, `tests/test_pack_loader.py`
-- Also create the demo pack files here (needed as loader fixture): `packs/hello-tumor-board/**`
+- Also create the demo pack files here (needed as loader fixture): `packs/demo-tumor-board/**`
 
 **Interfaces:**
 - Consumes: `harness.models.pack.*`, `harness.hashing.content_hash`.
 - Produces: `load_pack(path:str|Path) -> Pack`. Raises `PackValidationError` on schema violation. `pack_hash` = `content_hash` of the full canonicalized pack content (manifest+schema+cases+rubric+perturbations+batteries+suts+judge+acceptance), stable across load order.
 
-- [ ] Step 1: Author the `hello-tumor-board` pack files (synthetic, PHI-free): `manifest.yaml`; `casebank/schema.yaml` with elements `pathology_report`, `molecular_report`, `imaging_text`, `prior_notes`, `meds`; 3 `cases/*.json` with pseudonymized synthetic content + `ground_truth`; `rubric/rubric.yaml` (≥3 items incl. one `critical`); `rubric/adjudication/*.json`; `perturbations.yaml` (ablation + format axes); `battery.yaml`; `judge.yaml` (kind: fake); `acceptance.yaml`.
+- [ ] Step 1: Author the `demo-tumor-board` pack files (synthetic, PHI-free): `manifest.yaml`; `casebank/schema.yaml` with elements `pathology_report`, `molecular_report`, `imaging_text`, `prior_notes`, `meds`; 3 `cases/*.json` with pseudonymized synthetic content + `ground_truth`; `rubric/rubric.yaml` (≥3 items incl. one `critical`); `rubric/adjudication/*.json`; `perturbations.yaml` (ablation + format axes); `battery.yaml`; `judge.yaml` (kind: fake); `acceptance.yaml`.
 - [ ] Step 2: Write `tests/test_pack_loader.py`: loads demo pack; asserts 3 cases, ≥3 rubric items, one critical; `load_pack` twice yields identical `pack_hash`; malformed pack raises `PackValidationError`.
 - [ ] Step 3: Run — expect FAIL.
 - [ ] Step 4: Implement `loader.py` (read YAML/JSON, validate via pydantic, compute pack_hash).
 - [ ] Step 5: Run — expect PASS.
-- [ ] Step 6: Commit `feat: pack loader + hello-tumor-board demo pack`.
+- [ ] Step 6: Commit `feat: pack loader + demo-tumor-board demo pack`.
 
 ---
 
@@ -394,7 +394,7 @@ factory/
 
 - [ ] Step 1: Implement `execute.py` with injectable clock + seed.
 - [ ] Step 2: Implement `cli.py` (argparse); register console entry point in pyproject (`harness = "harness.cli:main"`).
-- [ ] Step 3: Manual smoke: `.venv/bin/harness run packs/hello-tumor-board --battery <id> --out ./runs --seed 1` prints a run_id + cost.
+- [ ] Step 3: Manual smoke: `.venv/bin/harness run packs/demo-tumor-board --battery <id> --out ./runs --seed 1` prints a run_id + cost.
 - [ ] Step 4: Commit `feat: battery execution orchestration + CLI`.
 
 ---

@@ -17,7 +17,7 @@ from harness.qms.mappers import build_change_request, build_vv_plan, build_vv_re
 from harness.qms.render import render_change_request_md, render_vv_report_md
 from harness.store.runstore import RunStore
 
-PACK = Path(__file__).resolve().parent.parent / "packs" / "hello-tumor-board"
+PACK = Path(__file__).resolve().parent.parent / "packs" / "demo-tumor-board"
 CLOCK = lambda: "2026-07-16T00:00:00+00:00"  # noqa: E731
 
 
@@ -33,7 +33,7 @@ def test_vv_plan_maps_requirements_and_is_dry_run(tmp_path):
     plan = build_vv_plan(pack, pack.battery("smoke"))
     rf = plan["required_fields"]
     assert plan["record_type"] == "verification_validation_plan"
-    assert rf["product_id"] == "hello-tumor-board"
+    assert rf["product_id"] == "demo-tumor-board"
     # fake SUT => dry-run evidence, never formal release
     assert rf["campaign_mode"] == "dry_run"
     # rubric items become the requirements / planned test cases

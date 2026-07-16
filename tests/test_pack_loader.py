@@ -5,12 +5,12 @@ import pytest
 
 from harness.packio.loader import PackValidationError, load_pack
 
-PACK = Path(__file__).resolve().parent.parent / "packs" / "hello-tumor-board"
+PACK = Path(__file__).resolve().parent.parent / "packs" / "demo-tumor-board"
 
 
 def test_loads_demo_pack():
     pack = load_pack(PACK)
-    assert pack.manifest.id == "hello-tumor-board"
+    assert pack.manifest.id == "demo-tumor-board"
     assert len(pack.cases) == 3
     assert len(pack.rubric.items) >= 3
     assert any(i.critical for i in pack.rubric.items)

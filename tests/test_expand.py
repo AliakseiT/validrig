@@ -5,7 +5,7 @@ import harness.perturb  # noqa: F401  (registers axes)
 from harness.packio.loader import load_pack
 from harness.perturb.expand import expand_battery
 
-PACK = Path(__file__).resolve().parent.parent / "packs" / "hello-tumor-board"
+PACK = Path(__file__).resolve().parent.parent / "packs" / "demo-tumor-board"
 
 
 def test_expands_to_expected_count():

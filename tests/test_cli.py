@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-PACK = REPO / "packs" / "hello-tumor-board"
+PACK = REPO / "packs" / "demo-tumor-board"
 
 
 def _run_cli(args, cwd):

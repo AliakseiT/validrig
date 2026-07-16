@@ -18,7 +18,7 @@ packs (`packs/`).
 - **M1** — pack loader, casebank, LLM-call SUT adapter (deterministic fake model
   for offline/hermetic runs, plus an OpenAI-compatible adapter), ablation +
   format perturbation axes, judge grading, append-only run store, bootstrap
-  stats, InputContract + ValidationReport, and the synthetic `hello-tumor-board`
+  stats, InputContract + ValidationReport, and the synthetic `demo-tumor-board`
   demo pack that runs end-to-end and reproducibly.
 - **M3 (core)** — **RegressionDiff**: diff two pinned runs at (case,
   perturbation, rubric-item), per-element contract, and aggregate granularity
@@ -44,10 +44,10 @@ python3.12 -m venv .venv
 .venv/bin/pytest -q
 
 # characterize the input contract for the demo pack
-.venv/bin/harness run packs/hello-tumor-board --battery smoke --out ./runs --seed 1
+.venv/bin/harness run packs/demo-tumor-board --battery smoke --out ./runs --seed 1
 
 # compare a baseline model against a (deliberately regressed) new version
-.venv/bin/harness run packs/hello-tumor-board --battery regression --out ./runs --seed 1
+.venv/bin/harness run packs/demo-tumor-board --battery regression --out ./runs --seed 1
 .venv/bin/harness diff --out ./runs --baseline <baseline_run_id> --candidate <candidate_run_id>
 ```
 

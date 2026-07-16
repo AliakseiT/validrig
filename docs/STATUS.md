@@ -11,8 +11,8 @@ first-class **fake model** and **fake judge**.
 ```bash
 python3.12 -m venv .venv && .venv/bin/pip install -e ".[dev]"
 .venv/bin/pytest -q                                   # 75 tests, ~2s
-.venv/bin/harness run packs/hello-tumor-board --battery smoke --out ./runs --seed 1
-.venv/bin/harness run packs/hello-tumor-board --battery regression --out ./runs --seed 1
+.venv/bin/harness run packs/demo-tumor-board --battery smoke --out ./runs --seed 1
+.venv/bin/harness run packs/demo-tumor-board --battery regression --out ./runs --seed 1
 .venv/bin/harness diff --out ./runs --baseline <run_a> --candidate <run_b>
 ```
 
@@ -20,7 +20,7 @@ python3.12 -m venv .venv && .venv/bin/pip install -e ".[dev]"
 
 | Milestone | Status | Notes |
 |-----------|--------|-------|
-| **M1 engine core** | ✅ complete | pack loader, casebank, LLM-call SUT adapter (+ OpenAI-compatible, mock-tested), ablation+format axes, judge grading, append-only SQLite+parquet store, bootstrap stats, InputContract + ValidationReport, `hello-tumor-board` demo, end-to-end + determinism + zero-leak gates |
+| **M1 engine core** | ✅ complete | pack loader, casebank, LLM-call SUT adapter (+ OpenAI-compatible, mock-tested), ablation+format axes, judge grading, append-only SQLite+parquet store, bootstrap stats, InputContract + ValidationReport, `demo-tumor-board` demo, end-to-end + determinism + zero-leak gates |
 | **M2 tumor-board tooling** | 🟡 partial | ✅ DE **language axis** + battery axis-scoping + multilingual demo. ❌ deferred: rubric authoring/adjudication UI, PDF/OCR ingestion (need human/design input — not suitable for unattended build) |
 | **M3 regression discipline** | 🟡 core done | ✅ battery pinning, **RegressionDiff** (item + per-element + aggregate w/ bootstrap significance), acceptance gating, CLI `diff`. ❌ remaining: real pinned LLM judge + judge-calibration gate — see `docs/proposals/2026-07-16-m3-regression-fixes.md` |
 | **M4 agent SUTs** | ⬜ not started | trace protocol/tool mocks/process rubrics — schema seams exist (`SUTSpec.kind`, `Trace`/`Step`) |
@@ -79,6 +79,6 @@ python3.12 -m venv .venv && .venv/bin/pip install -e ".[dev]"
 - Plan: `docs/superpowers/plans/2026-07-16-harness-factory-m1.md`
 - Engine: `harness/` — `models/`, `packio/`, `perturb/`, `sut/`, `judge/`,
   `store/`, `stats/`, `artifacts/`, `execute.py`, `diff.py`, `cli.py`
-- Demo pack: `packs/hello-tumor-board/`
+- Demo pack: `packs/demo-tumor-board/`
 - Tests: `tests/` (one file per subsystem + integration gates)
 - Git: local commits per task; nothing pushed.
