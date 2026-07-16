@@ -77,6 +77,9 @@ def load_pack(path: str | Path) -> Pack:
         adj_dir = root / "rubric" / "adjudication"
         adj_files = sorted(adj_dir.glob("*.json")) if adj_dir.is_dir() else []
         adjudications = [Adjudication(**_read_json(p)) for p in adj_files]
+
+        mock_dir = root / "mocks"
+        mocks = {p.stem: _read_json(p) for p in sorted(mock_dir.glob("*.json"))} if mock_dir.is_dir() else {}
     except ValidationError as exc:
         raise PackValidationError(str(exc)) from exc
     except (yaml.YAMLError, json.JSONDecodeError) as exc:
@@ -109,6 +112,7 @@ def load_pack(path: str | Path) -> Pack:
         judge=judge,
         acceptance=acceptance,
         adjudications=adjudications,
+        mocks=mocks,
     )
     pack_hash = content_hash(pack.model_dump(mode="json", exclude={"pack_hash"}))
     return pack.model_copy(update={"pack_hash": pack_hash})

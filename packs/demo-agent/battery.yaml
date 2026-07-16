@@ -1,0 +1,8 @@
+batteries:
+  - id: agent
+    version: "1"
+    cases: all
+    perturbations: all
+    axes: ["ablation", "format"]
+    suts: ["agent-full", "agent-lazy"]
+    n_samples: 1

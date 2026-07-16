@@ -1,0 +1,8 @@
+# Mutation axes precede the rendering axis. Minimal grid for the agent demo.
+axes:
+  ablation:
+    - id: baseline
+      drop: []
+  format:
+    - id: structured
+      style: structured

@@ -9,12 +9,14 @@ the OpenAI-compatible adapter.
 
 from __future__ import annotations
 
+from typing import Any
+
 from harness.models.sut import SUTSpec
 from harness.sut.base import SUTAdapter
 from harness.sut.fake import FakeModel
 
 
-def build_adapter(spec: SUTSpec) -> SUTAdapter:
+def build_adapter(spec: SUTSpec, mocks: dict[str, Any] | None = None) -> SUTAdapter:
     binding = spec.binding
     if spec.kind == "llm_call" and binding.model_id == "fake":
         return FakeModel(
@@ -27,6 +29,16 @@ def build_adapter(spec: SUTSpec) -> SUTAdapter:
         from harness.sut.openai_compat import OpenAICompatModel
 
         return OpenAICompatModel(binding)
+    if spec.kind == "agent" and binding.model_id == "fake":
+        from harness.agent.fake_agent import FakeAgent
+        from harness.agent.mocks import MockStore
+
+        return FakeAgent(
+            system_prompt=binding.system_prompt,
+            model_version=binding.model_version,
+            tools_to_call=binding.params.get("tools_to_call", []),
+            mock_store=MockStore(mocks or {}),
+        )
     raise NotImplementedError(
-        f"SUT kind '{spec.kind}' is not executable in M1 (only llm_call)"
+        f"SUT kind '{spec.kind}' with model '{binding.model_id}' is not executable"
     )

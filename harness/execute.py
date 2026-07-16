@@ -44,6 +44,7 @@ from harness.stats.analyze import (
     mean_score,
 )
 from harness.store.runstore import RunStore
+from harness.sut.base import SUTContext
 from harness.sut.registry import build_adapter
 from harness.version import ENGINE_VERSION
 
@@ -100,7 +101,7 @@ def run_battery(
         sut_spec = pack.sut(sut_id)
         if sut_spec is None:
             raise KeyError(f"battery references unknown SUT: {sut_id}")
-        adapter = build_adapter(sut_spec)
+        adapter = build_adapter(sut_spec, mocks=pack.mocks)
         sut_units = [u for u in units if u.sut_id == sut_id]
 
         generations: list[Generation] = []
@@ -109,7 +110,7 @@ def run_battery(
         total_usage = TokenUsage.zero()
 
         for unit in sut_units:
-            out = adapter.generate(unit.document, seed)
+            out = adapter.generate(unit.document, seed, context=SUTContext(case_id=unit.case_id))
             gen = Generation(
                 case_id=unit.case_id,
                 perturbation_id=unit.perturbation_id,
@@ -121,7 +122,10 @@ def run_battery(
             generations.append(gen)
             total_usage = total_usage + out.usage
 
-            grade = grade_generation(pack.rubric, gen, _grading_case(pack, unit), judge, seed)
+            grade = grade_generation(
+                pack.rubric, gen, _grading_case(pack, unit), judge, seed,
+                sut_kind=sut_spec.kind,
+            )
             grades.append(grade)
 
             dropped = tuple(unit.provenance.get("ablation", {}).get("dropped", []))

@@ -1,0 +1,10 @@
+{
+  "case_id": "E001",
+  "elements": {
+    "encounter": "Encounter note (synthetic). Molecular result on file: EGFR exon 19 deletion detected. Plan: discuss targeted therapy at board."
+  },
+  "ground_truth": {
+    "item_reports_molecular": {"evidence": ["EGFR"], "expected": true},
+    "item_used_molecular_tool": {"required_tools": ["molecular_lookup"]}
+  }
+}

@@ -1,0 +1,7 @@
+elements:
+  - name: encounter
+    type: text
+    modality: clinical_note
+    language: en
+    source_system: EHR
+    required: true

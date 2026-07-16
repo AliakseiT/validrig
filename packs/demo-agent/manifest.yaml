@@ -1,0 +1,12 @@
+id: demo-agent
+version: "0.1.0"
+intended_use: >
+  Synthetic demonstration pack for a tool-using agent. Exercises process rubrics
+  (grading the trace, not just the answer) and deterministic tool mocks. FOR
+  HARNESS DEMONSTRATION ONLY — synthetic, PHI-free data; not a clinical device.
+device_status_rationale: >
+  Not placed on the market and not put into service for a clinical purpose in this
+  demo configuration; used solely to exercise the agent-evaluation engine.
+population: >
+  Synthetic single-encounter examples, English.
+languages: ["en"]

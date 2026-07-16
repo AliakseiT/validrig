@@ -1,0 +1,22 @@
+# Two agents on the same battery: one consults the molecular tool, one skips it
+# but still reports the finding from the note (right answer, wrong process).
+suts:
+  - id: agent-full
+    kind: agent
+    binding:
+      model_id: fake
+      model_version: "1"
+      system_prompt: >
+        Summarize the encounter for the board, consulting available tools to
+        confirm findings.
+      params:
+        tools_to_call: ["molecular_lookup"]
+  - id: agent-lazy
+    kind: agent
+    binding:
+      model_id: fake
+      model_version: "1"
+      system_prompt: >
+        Summarize the encounter for the board.
+      params:
+        tools_to_call: []

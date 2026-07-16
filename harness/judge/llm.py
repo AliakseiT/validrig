@@ -137,8 +137,18 @@ class LLMJudge(Judge):
         output: str,
         ground_truth: dict,
         seed: int,
+        trace: dict | None = None,
     ) -> ItemGrade:
-        prompt = self._build_prompt(item, document, output, ground_truth)
+        # For process (trace-target) items, grade the serialized trace steps
+        # instead of the final output.
+        graded_content = output
+        if item.target == "trace":
+            steps = (trace or {}).get("steps", [])
+            graded_content = "\n".join(
+                f"- tool={s.get('name')} error={(s.get('data') or {}).get('error')}"
+                for s in steps
+            ) or "(no trace steps)"
+        prompt = self._build_prompt(item, document, graded_content, ground_truth)
         payload = {
             "model": self.binding.model_id,
             "messages": self._messages(prompt),

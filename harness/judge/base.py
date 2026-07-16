@@ -24,6 +24,7 @@ from harness.models.pack import RubricItem
 
 STATUS_GRADED = "graded"
 STATUS_JUDGE_ERROR = "judge_error"
+STATUS_NOT_APPLICABLE = "not_applicable"
 
 
 @dataclass(frozen=True)
@@ -49,6 +50,10 @@ class ItemGrade:
     def error(cls, note: str) -> "ItemGrade":
         return cls(score=None, note=note, status=STATUS_JUDGE_ERROR)
 
+    @classmethod
+    def not_applicable(cls, note: str) -> "ItemGrade":
+        return cls(score=None, note=note, status=STATUS_NOT_APPLICABLE)
+
 
 class Judge(ABC):
     #: Whether grades from this judge are safe to use as a regression baseline.
@@ -64,6 +69,11 @@ class Judge(ABC):
         output: str,
         ground_truth: dict[str, Any],
         seed: int,
+        trace: dict[str, Any] | None = None,
     ) -> ItemGrade:
-        """Return an ``ItemGrade`` for ``item`` given the SUT ``output``."""
+        """Return an ``ItemGrade`` for ``item``.
+
+        For an output-target item this grades ``output``; for a trace-target
+        (process) item it grades ``trace`` (the agent's observable steps).
+        """
         raise NotImplementedError

@@ -68,7 +68,7 @@ class FakeModel(SUTAdapter):
         low = line.lower()
         return not any(marker in low for marker in self.suppress)
 
-    def generate(self, document: str, seed: int) -> GenerationOutput:
+    def generate(self, document: str, seed: int, context=None) -> GenerationOutput:
         signature = content_hash((document, self.system_prompt, seed, tuple(self.suppress)))[:12]
         findings = [line for line in _salient_lines(document) if self._keep(line)]
         body = "\n".join(f"- {line}" for line in findings)

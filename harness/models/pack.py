@@ -76,6 +76,11 @@ class RubricItem(_Frozen):
     critical: bool = False
     evidence_required: bool = False
     max_score: float = 1.0
+    # What the item grades: the final "output", or the agent "trace" (a process
+    # rubric — did it query the right source, call the right tool). Output and
+    # process scores are kept separate; a right answer via the wrong process
+    # must fail the process item while the output item passes.
+    target: Literal["output", "trace"] = "output"
 
 
 class Rubric(_Frozen):
@@ -148,6 +153,8 @@ class Pack(_Frozen):
     judge: JudgeSpec
     acceptance: AcceptanceSpec
     adjudications: list[Adjudication] = Field(default_factory=list)
+    # Recorded tool mocks for agent SUTs: {case_id: {tool: {args_hash: {...}}}}.
+    mocks: dict[str, Any] = Field(default_factory=dict)
     pack_hash: str = ""
 
     def adjudication(self, case_id: str) -> Adjudication | None:

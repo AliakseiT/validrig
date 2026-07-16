@@ -35,7 +35,7 @@ class OpenAICompatModel(SUTAdapter):
         messages.append({"role": "user", "content": document})
         return messages
 
-    def generate(self, document: str, seed: int) -> GenerationOutput:
+    def generate(self, document: str, seed: int, context=None) -> GenerationOutput:
         payload = {
             "model": self.binding.model_id,
             "messages": self._build_messages(document),

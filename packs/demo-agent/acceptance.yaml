@@ -1,0 +1,6 @@
+# agent-full: output pass + process pass = 1.0 -> PASS.
+# agent-lazy: output pass + process fail = 0.5 -> FAIL (process rubric catches
+# the shortcut even though the answer is right).
+thresholds:
+  critical_omission_rate_max: 0.10
+  mean_score_min: 0.60

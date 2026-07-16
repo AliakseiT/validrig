@@ -34,14 +34,22 @@ def grade_generation(
     case: Case,
     judge: Judge,
     seed: int,
+    sut_kind: str = "llm_call",
 ) -> Grade:
     item_scores: dict[str, float] = {}
     judge_notes: dict[str, str] = {}
     item_status: dict[str, str] = {}
     document = str(case.elements.get("__document__", ""))
     for item in rubric.items:
+        # A process (trace-target) rubric is only applicable to systems with an
+        # observable process. For a non-agent SUT it is N/A, not a failure.
+        if item.target == "trace" and sut_kind != "agent":
+            item_status[item.id] = "not_applicable"
+            judge_notes[item.id] = "process rubric not applicable: SUT is not an agent"
+            continue
         result = judge.grade_item(
-            item, document, generation.raw_output, case.ground_truth, seed
+            item, document, generation.raw_output, case.ground_truth, seed,
+            trace=generation.trace,
         )
         judge_notes[item.id] = result.note
         if result.is_error or result.score is None:

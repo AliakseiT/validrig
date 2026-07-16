@@ -1,0 +1,19 @@
+items:
+  - id: item_reports_molecular
+    statement: The brief reports the actionable molecular alteration.
+    type: binary
+    critical: true
+    target: output
+    evidence_required: true
+    grading_instructions: Score 1.0 if the output names the molecular alteration; else 0.0.
+    max_score: 1.0
+  - id: item_used_molecular_tool
+    statement: The agent consulted the molecular-lookup tool rather than relying on the note alone.
+    type: binary
+    critical: false
+    target: trace
+    grading_instructions: >
+      Process rubric. Score 1.0 only if the trace shows a successful
+      molecular_lookup tool call; else 0.0. Not applicable to systems with no
+      observable process.
+    max_score: 1.0

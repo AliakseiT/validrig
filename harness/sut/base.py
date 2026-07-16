@@ -22,6 +22,17 @@ class GenerationOutput:
     usage: TokenUsage
 
 
+@dataclass(frozen=True)
+class SUTContext:
+    """Per-unit context an adapter may need beyond the document.
+
+    Notably ``case_id``, which agent adapters use to look up recorded tool mocks.
+    Plain LLM adapters ignore it.
+    """
+
+    case_id: str
+
+
 class SUTAdapter(ABC):
     """Base class for all SUT adapters."""
 
@@ -30,5 +41,7 @@ class SUTAdapter(ABC):
     reproducible: bool = True
 
     @abstractmethod
-    def generate(self, document: str, seed: int) -> GenerationOutput:
+    def generate(
+        self, document: str, seed: int, context: SUTContext | None = None
+    ) -> GenerationOutput:
         raise NotImplementedError

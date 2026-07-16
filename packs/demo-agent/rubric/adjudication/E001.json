@@ -1,0 +1,9 @@
+{
+  "case_id": "E001",
+  "adjudicated_by": "synthetic-panel",
+  "adjudicated_at": "2026-07-16",
+  "values": {
+    "item_reports_molecular": 1.0,
+    "item_used_molecular_tool": 1.0
+  }
+}
