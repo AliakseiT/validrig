@@ -1,0 +1,141 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+"""Declarative pack schema — the content that defines an intended use.
+
+An ``IntendedUsePack`` is authored, versioned content: manifest, case schema,
+adjudicated cases, rubric, perturbation grid, batteries, systems under test,
+judge config, and pre-registered acceptance thresholds. The engine validates
+and executes packs but contains no pack-specific logic.
+"""
+
+from __future__ import annotations
+
+from typing import Any, Literal, Union
+
+from pydantic import BaseModel, ConfigDict, Field
+
+from harness.models.sut import SUTSpec
+
+
+class _Frozen(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+
+class ElementSpec(_Frozen):
+    """One typed element of a case's input (e.g. a report, prior notes, meds)."""
+
+    name: str
+    type: str
+    modality: str
+    language: str
+    source_system: str | None = None
+    required: bool = True
+
+
+class CaseSchema(_Frozen):
+    elements: list[ElementSpec]
+
+    def element_names(self) -> list[str]:
+        return [e.name for e in self.elements]
+
+    def by_name(self, name: str) -> ElementSpec | None:
+        for e in self.elements:
+            if e.name == name:
+                return e
+        return None
+
+
+class Case(_Frozen):
+    case_id: str
+    elements: dict[str, Any]
+    ground_truth: dict[str, Any] = Field(default_factory=dict)
+
+
+class RubricItem(_Frozen):
+    id: str
+    statement: str
+    type: Literal["binary", "graded"]
+    grading_instructions: str
+    critical: bool = False
+    evidence_required: bool = False
+    max_score: float = 1.0
+
+
+class Rubric(_Frozen):
+    items: list[RubricItem]
+
+    def by_id(self, item_id: str) -> RubricItem | None:
+        for i in self.items:
+            if i.id == item_id:
+                return i
+        return None
+
+
+class PerturbationSpec(_Frozen):
+    """The perturbation grid: axis name -> list of level configurations."""
+
+    axes: dict[str, list[dict[str, Any]]] = Field(default_factory=dict)
+
+
+class BatterySpec(_Frozen):
+    """A pinned, named, versioned selection of cases x perturbations x SUTs."""
+
+    id: str
+    version: str
+    cases: Union[list[str], Literal["all"]] = "all"
+    perturbations: Union[list[str], Literal["all"]] = "all"
+    suts: list[str]
+    n_samples: int = 1
+
+
+class JudgeSpec(_Frozen):
+    id: str
+    version: str
+    kind: str
+    binding: dict[str, Any] = Field(default_factory=dict)
+    calibration_fraction: float = 0.1
+
+
+class AcceptanceSpec(_Frozen):
+    """Pre-registered thresholds, keyed by metric name."""
+
+    thresholds: dict[str, float] = Field(default_factory=dict)
+
+
+class Manifest(_Frozen):
+    id: str
+    version: str
+    intended_use: str
+    device_status_rationale: str
+    population: str
+    languages: list[str]
+
+
+class Pack(_Frozen):
+    manifest: Manifest
+    case_schema: CaseSchema
+    cases: list[Case]
+    rubric: Rubric
+    perturbations: PerturbationSpec
+    batteries: list[BatterySpec]
+    suts: list[SUTSpec]
+    judge: JudgeSpec
+    acceptance: AcceptanceSpec
+    pack_hash: str = ""
+
+    def battery(self, battery_id: str) -> BatterySpec | None:
+        for b in self.batteries:
+            if b.id == battery_id:
+                return b
+        return None
+
+    def sut(self, sut_id: str) -> SUTSpec | None:
+        for s in self.suts:
+            if s.id == sut_id:
+                return s
+        return None
+
+    def case(self, case_id: str) -> Case | None:
+        for c in self.cases:
+            if c.case_id == case_id:
+                return c
+        return None
