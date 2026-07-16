@@ -135,8 +135,15 @@ def build_vv_report(
     grades: list[Grade],
     validation_report: dict[str, Any],
     contract: dict[str, Any],
+    calibration: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """V&V Report from a run: verdict from the baseline, characterization aside."""
+    """V&V Report from a run: verdict from the baseline, characterization aside.
+
+    ``calibration`` (agreement + gate) is optional and supplied by the async QMS
+    step, not the synchronous run — a human grades over time, so at run time
+    there is no calibration data. If the calibration gate blocks, the release
+    recommendation is overridden accordingly.
+    """
     item_status = _baseline_item_status(pack, battery, grades)
     passed = sum(1 for s in item_status.values() if s == "pass")
     failed = sum(1 for s in item_status.values() if s == "fail")
@@ -145,6 +152,10 @@ def build_vv_report(
     acceptance = validation_report.get("acceptance", {})
     overall_pass = acceptance.get("overall_pass", False)
     recommendation = "approved_for_release" if overall_pass else "not_approved_for_release"
+
+    calibration_block = calibration or {"status": "not_collected"}
+    if calibration and calibration.get("gate", {}).get("blocks_report_issuance"):
+        recommendation = "blocked_pending_calibration"
 
     deviations = [
         {"test_case_id": item_id, "status": status}
@@ -201,6 +212,7 @@ def build_vv_report(
             "per_test_case": item_status,
         },
         "characterization": characterization,
+        "calibration": calibration_block,
         "deviations_and_open_issues": deviations,
         "release_recommendation": recommendation,
         "attestation": build_attestation(pins, run_meta),

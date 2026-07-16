@@ -11,7 +11,9 @@ from pathlib import Path
 from harness.diff import diff_runs
 from harness.execute import run_battery
 from harness.packio.loader import load_pack
+from harness.qms.calibration_record import build_calibration_status
 from harness.qms.mappers import build_change_request, build_vv_plan, build_vv_report
+from harness.qms.package import build_package_manifest
 from harness.qms.render import (
     render_change_request_md,
     render_vv_report_md,
@@ -85,23 +87,66 @@ def _cmd_qms(args: argparse.Namespace) -> int:
     qms_dir = store.runs_dir / args.run / "qms"
     qms_dir.mkdir(parents=True, exist_ok=True)
 
+    # Calibration is asynchronous: evaluate the gate as-of-now from the store.
+    calibration = _calibration_summary(pack, run, store, args.out)
+
     plan = build_vv_plan(pack, battery)
     report = build_vv_report(
-        pack, battery, run.pins, run.meta, grades, validation_report, contract
+        pack, battery, run.pins, run.meta, grades, validation_report, contract,
+        calibration=calibration,
     )
     write_text(qms_dir / "vv_plan.yml", render_yaml(plan))
     write_text(qms_dir / "vv_report.md", render_vv_report_md(report))
     write_text(qms_dir / "vv_report.json", json.dumps(report, indent=2, sort_keys=True))
 
+    documents = [
+        {"type": "verification_validation_plan", "path": "qms/vv_plan.yml"},
+        {"type": "verification_validation_report", "path": "qms/vv_report.md"},
+        {"type": "input_contract", "path": "contract.json"},
+        {"type": "validation_report", "path": "validation_report.json"},
+    ]
+    if calibration is not None:
+        status = build_calibration_status(
+            run.pins, run.meta, calibration["agreement"], calibration["gate"]
+        )
+        write_text(qms_dir / "calibration_status.json", json.dumps(status, indent=2, sort_keys=True))
+        documents.append({"type": "calibration_status", "path": "qms/calibration_status.json"})
+
+    manifest = build_package_manifest(
+        run.pins, run.meta, documents,
+        report["release_recommendation"],
+        calibration["gate"]["status"] if calibration else "not_collected",
+    )
+    write_text(qms_dir / "package_manifest.json", json.dumps(manifest, indent=2, sort_keys=True))
+
     s = report["summary_of_results"]
-    print(f"QMS records for run {args.run} (baseline {report['attestation']['qms_baseline_tag']}):")
+    print(f"QMS package for run {args.run} (baseline {report['attestation']['qms_baseline_tag']}):")
     print(f"  V&V plan:   {qms_dir / 'vv_plan.yml'}")
     print(
         f"  V&V report: {qms_dir / 'vv_report.md'} "
         f"[{s['passed']}/{s['total_test_cases']} passed, "
         f"recommendation={report['release_recommendation']}]"
     )
+    print(f"  calibration gate: {manifest['calibration_gate_status']}")
+    print(f"  manifest:   {qms_dir / 'package_manifest.json'}")
     return 0
+
+
+def _calibration_summary(pack, run, store, out_root):
+    """Compute agreement + gate from the calibration store, or None if no human
+    grades exist yet. Kept in the CLI so the core stays free of the calib store."""
+    from harness.calibration.agreement import compute_agreement
+    from harness.calibration.gate import evaluate_gate
+    from harness.calibration.store import CalibrationStore
+
+    calib_store = CalibrationStore(out_root)
+    human = calib_store.read_human_grades(run.meta.run_id)
+    if not human:
+        return None
+    agreement = compute_agreement(store.read_grades(run.meta.run_id), human)
+    kappa_min = pack.acceptance.thresholds.get("judge_agreement_kappa_min", 0.6)
+    gate = evaluate_gate(agreement, kappa_min)
+    return {"agreement": agreement, "gate": gate}
 
 
 def _cmd_qms_change(args: argparse.Namespace) -> int:

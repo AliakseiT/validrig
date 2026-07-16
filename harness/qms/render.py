@@ -70,6 +70,17 @@ def render_vv_report_md(record: dict[str, Any]) -> str:
     else:
         lines.append("- None")
 
+    cal = record.get("calibration", {"status": "not_collected"})
+    lines += ["", "## Judge Calibration"]
+    if cal.get("status") == "not_collected":
+        _kv(lines, "Status", "not collected (no human double-grading yet)")
+    else:
+        gate = cal.get("gate", {})
+        overall = cal.get("agreement", {}).get("overall", {})
+        _kv(lines, "Gate", gate.get("status"))
+        _kv(lines, "Overall κ", overall.get("kappa"))
+        _kv(lines, "Observations (n)", overall.get("n"))
+
     rec = record["release_recommendation"]
     lines += ["", "## Release Recommendation"]
     lines.append(f"- [{'x' if rec == 'approved_for_release' else ' '}] Approved for release")

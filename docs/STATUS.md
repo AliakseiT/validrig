@@ -10,7 +10,7 @@ first-class **fake model** and **fake judge**.
 
 ```bash
 python3.12 -m venv .venv && .venv/bin/pip install -e ".[dev]"
-.venv/bin/pytest -q                                   # 120 tests, ~3s
+.venv/bin/pytest -q                                   # 125 tests, ~3s
 .venv/bin/harness new packs/my-pack --id my-pack      # scaffold a new pack
 .venv/bin/harness lint packs/demo-tumor-board         # check a pack for authoring gaps
 .venv/bin/harness run packs/demo-tumor-board --battery smoke --out ./runs --seed 1
@@ -30,7 +30,7 @@ python3.12 -m venv .venv && .venv/bin/pip install -e ".[dev]"
 | **Review UI (M2/M3)** | 🟡 v1 (calibration) | ✅ FastAPI + Jinja2 calibration review (dashboard, grade sampled generations, agreement/κ + gate), behind the `[ui]` extra; binds localhost by default; never mutates immutable grades. Data path tested via TestClient + live uvicorn smoke. ❌ deferred: clinical UX review, adjudication authoring (write-only until loader ingests it), multi-rater, SSO |
 | **M4 agent SUTs** | ⬜ not started | trace protocol/tool mocks/process rubrics — schema seams exist (`SUTSpec.kind`, `Trace`/`Step`) |
 | **M5 monitoring** | ⬜ not started | — |
-| **QMS integration (§6)** | 🟡 core done | ✅ maps runs → **r05** (`QMS-2026-07-09-R005`) V&V plan, V&V report (baseline verdict; perturbations as characterization), and change request (from RegressionDiff); attestation over pinned inputs; unsigned drafts; `harness qms` / `qms-change`. ❌ deferred: PMS periodic report + AIMS event (need M5 monitoring inputs) |
+| **QMS integration (§6)** | 🟢 package done | ✅ maps runs → **r05** (`QMS-2026-07-09-R005`): V&V plan, V&V report (baseline verdict; perturbations as characterization; calibration gate folded in async), change request (from RegressionDiff), **calibration status**, and a **package manifest** tying documents to shared pins. Attestation over pinned inputs; unsigned drafts. Traceability map in `docs/qms-traceability.md`. ❌ deferred: PMS periodic report + AIMS event (need M5 monitoring inputs) |
 
 ## Proposals
 
@@ -67,17 +67,16 @@ python3.12 -m venv .venv && .venv/bin/pip install -e ".[dev]"
   (English-phrasing-dependent) while molecular/staging survive (language-
   invariant tokens).
 
-## Deliberately deferred (need human input, not an overnight pass)
+## Still deferred (need real data or a clinical decision)
 
-- **Pseudonymization boundary** (§5): a naive scrubber looks done while missing
-  PHI. Demo data is synthetic, so nothing verifies it. Needs design attention.
-- **Rubric adjudication / judge-calibration UI** (M2/M4): FastAPI review UI —
-  design decisions + human-in-the-loop; can't be verified offline.
+- **Pseudonymization boundary** (§5): its safety-critical property is *recall*,
+  which is unverifiable on synthetic data — needs a clinical decision, own turn.
 - **PDF/OCR ingestion** (M2): needs external binaries and real documents.
-- **QMS templating** (§6): needs the `dearauditor-qms-baseline` templates to map
-  against; risky to guess their structure.
-- **Real model endpoints**: OpenAI-compatible adapter is built and mock-tested;
-  no live call is made (no keys, and it would break the offline guarantee).
+- **Review UI clinical UX review**: the data path is tested; whether a clinician
+  wants this flow is not.
+- **Real model endpoints**: OpenAI-compatible SUT + LLM judge are built and
+  mock-tested; no live call is made in tests (offline guarantee).
+- **M5 monitoring** and its QMS records (PMS periodic report, AIMS event).
 
 ## Where the code is
 
