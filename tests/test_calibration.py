@@ -97,6 +97,35 @@ def test_gate_low_n_is_advisory_not_block():
     assert gate["blocks_report_issuance"] is False
 
 
+def test_regrade_does_not_double_count():
+    # Grade a unit, then re-grade the SAME unit with the opposite label. The
+    # correction must replace, not accumulate: n stays 1 and reflects the latest.
+    key = ("C0", "p", 0)
+    judge = [_judge_grade(key, {"item_diagnosis": 1.0})]
+    human = [
+        HumanGrade(run_id="R", case_id="C0", perturbation_id="p", sample_idx=0,
+                   grader_id="dr_x", item_scores={"item_diagnosis": 0.0}),  # first: disagree
+        HumanGrade(run_id="R", case_id="C0", perturbation_id="p", sample_idx=0,
+                   grader_id="dr_x", item_scores={"item_diagnosis": 1.0}),  # re-grade: agree
+    ]
+    agreement = compute_agreement(judge, human)
+    stats = agreement["items"]["item_diagnosis"]
+    assert stats["n"] == 1  # not 2
+    assert stats["percent_agreement"] == 1.0  # reflects the corrected (agreeing) label
+
+
+def test_regrade_by_different_grader_counts_separately():
+    key = ("C0", "p", 0)
+    judge = [_judge_grade(key, {"item_diagnosis": 1.0})]
+    human = [
+        HumanGrade(run_id="R", case_id="C0", perturbation_id="p", sample_idx=0,
+                   grader_id="dr_x", item_scores={"item_diagnosis": 1.0}),
+        HumanGrade(run_id="R", case_id="C0", perturbation_id="p", sample_idx=0,
+                   grader_id="dr_y", item_scores={"item_diagnosis": 1.0}),
+    ]
+    assert compute_agreement(judge, human)["items"]["item_diagnosis"]["n"] == 2
+
+
 def test_judge_error_item_excluded_from_agreement():
     # judge could not grade the item (absent) -> not counted
     judge = [Grade(case_id="C0", perturbation_id="p", sample_idx=0,

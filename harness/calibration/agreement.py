@@ -30,7 +30,11 @@ def cohen_kappa(judge_labels: list[int], human_labels: list[int]) -> float | Non
         ph = sum(1 for x in human_labels if x == c) / n
         pe += pj * ph
     if pe >= 1.0:
-        # No variability by chance is possible: agreement is perfect or it isn't.
+        # No label variability, so chance agreement is total. Convention: return
+        # 1.0 on perfect agreement, else 0.0. Note the "kappa paradox" — an
+        # all-same-class item (e.g. every generation truly "pass") yields kappa
+        # 1.0 without any disagreement having been tested. Low-n is already
+        # advisory; read a high kappa on a zero-variance item with that in mind.
         return 1.0 if po == 1.0 else 0.0
     return (po - pe) / (1.0 - pe)
 
@@ -45,10 +49,19 @@ def compute_agreement(
 ) -> dict[str, Any]:
     judge_by_key = {(g.case_id, g.perturbation_id, g.sample_idx): g for g in judge_grades}
 
+    # The human-grade store is append-only, so a re-grade (the reviewer's core
+    # correcting action) adds a new line. Keep only the latest grade per
+    # (grader, content key) before counting, or a corrected unit would be counted
+    # twice — and the stale, wrong label would still skew kappa and the gate.
+    latest: dict[tuple[str, tuple], HumanGrade] = {}
+    for hg in human_grades:
+        latest[(hg.grader_id, hg.content_key())] = hg
+    deduped = list(latest.values())
+
     per_item_judge: dict[str, list[int]] = defaultdict(list)
     per_item_human: dict[str, list[int]] = defaultdict(list)
 
-    for hg in human_grades:
+    for hg in deduped:
         jg = judge_by_key.get(hg.content_key())
         if jg is None:
             continue
