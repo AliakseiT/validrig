@@ -12,10 +12,19 @@ packs (`packs/`).
 
 ## Status
 
-**M1 (engine core)** — pack loader, casebank, LLM-call SUT adapter (with a
-deterministic fake model for offline/hermetic runs), ablation + format perturbation
-axes, judge grading, append-only run store, basic stats, and the synthetic
-`hello-tumor-board` demo pack that runs end-to-end and reproducibly.
+**M1 (engine core)** complete, plus slices of M2 and M3. See
+[`docs/STATUS.md`](docs/STATUS.md) for the full picture.
+
+- **M1** — pack loader, casebank, LLM-call SUT adapter (deterministic fake model
+  for offline/hermetic runs, plus an OpenAI-compatible adapter), ablation +
+  format perturbation axes, judge grading, append-only run store, bootstrap
+  stats, InputContract + ValidationReport, and the synthetic `hello-tumor-board`
+  demo pack that runs end-to-end and reproducibly.
+- **M3 (core)** — **RegressionDiff**: diff two pinned runs at (case,
+  perturbation, rubric-item), per-element contract, and aggregate granularity
+  with bootstrap significance. `harness diff` surfaces "what the new version
+  broke".
+- **M2 (slice)** — DE **language axis** and battery axis-scoping.
 
 ## Design principles
 
@@ -33,7 +42,13 @@ axes, judge grading, append-only run store, basic stats, and the synthetic
 python3.12 -m venv .venv
 .venv/bin/pip install -e ".[dev]"
 .venv/bin/pytest -q
+
+# characterize the input contract for the demo pack
 .venv/bin/harness run packs/hello-tumor-board --battery smoke --out ./runs --seed 1
+
+# compare a baseline model against a (deliberately regressed) new version
+.venv/bin/harness run packs/hello-tumor-board --battery regression --out ./runs --seed 1
+.venv/bin/harness diff --out ./runs --baseline <baseline_run_id> --candidate <candidate_run_id>
 ```
 
 ## License

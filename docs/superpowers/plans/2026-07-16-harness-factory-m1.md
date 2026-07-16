@@ -8,6 +8,10 @@
 
 **Tech Stack:** Python 3.12, pydantic v2, pyarrow (parquet), httpx (real adapter), numpy (bootstrap stats), PyYAML (pack files), pytest. SQLite via stdlib. No scipy, no server DB, no web framework in M1.
 
+> **STATUS (2026-07-16):** All 16 tasks below are ✅ complete. Work then continued
+> past this plan into a RegressionDiff (M3 core) and a language axis (M2 slice).
+> See `docs/STATUS.md` for the current milestone picture and what remains deferred.
+
 ## Global Constraints
 
 - **Zero engine code per pack.** Engine must contain no use-case strings. Literal test: `grep -ri "tumor\|pathology_report\|molecular_report" harness/` (the engine package) returns zero hits. Use-case logic lives only in `packs/`.
