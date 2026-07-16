@@ -12,6 +12,7 @@ import json
 from pathlib import Path
 
 from harness.calibration.models import HumanGrade
+from harness.pathsafe import confined_path, require_safe_id
 
 
 class CalibrationStore:
@@ -21,7 +22,9 @@ class CalibrationStore:
         self.calib_dir.mkdir(parents=True, exist_ok=True)
 
     def _path(self, run_id: str) -> Path:
-        return self.calib_dir / f"{run_id}.jsonl"
+        # run_id reaches here from URL input; validate and confine.
+        require_safe_id(run_id, "run_id")
+        return confined_path(self.calib_dir, f"{run_id}.jsonl")
 
     def append_human_grade(self, grade: HumanGrade) -> None:
         path = self._path(grade.run_id)

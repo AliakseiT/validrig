@@ -18,6 +18,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from harness.models.results import Generation, Grade, Pins, Run, RunMeta, TokenUsage
+from harness.pathsafe import confined_path, require_safe_id
 
 
 class RunStore:
@@ -61,7 +62,7 @@ class RunStore:
                     run.meta.env_hash,
                 ),
             )
-        (self.runs_dir / run.meta.run_id).mkdir(parents=True, exist_ok=True)
+        self._run_dir(run.meta.run_id).mkdir(parents=True, exist_ok=True)
 
     def read_run(self, run_id: str) -> Run:
         with sqlite3.connect(self.db_path) as conn:
@@ -83,21 +84,27 @@ class RunStore:
     # ---- derived artifacts ------------------------------------------------
 
     def read_contract(self, run_id: str) -> dict | None:
-        path = self.runs_dir / run_id / "contract.json"
+        path = self._run_dir(run_id) / "contract.json"
         if not path.exists():
             return None
         return json.loads(path.read_text(encoding="utf-8"))
 
     def read_report(self, run_id: str) -> dict | None:
-        path = self.runs_dir / run_id / "validation_report.json"
+        path = self._run_dir(run_id) / "validation_report.json"
         if not path.exists():
             return None
         return json.loads(path.read_text(encoding="utf-8"))
 
+    def _run_dir(self, run_id: str) -> Path:
+        # run_id may arrive from untrusted input (URL path in the UI). Validate
+        # and confine so it cannot traverse outside the runs directory.
+        require_safe_id(run_id, "run_id")
+        return confined_path(self.runs_dir, run_id)
+
     # ---- generations ------------------------------------------------------
 
     def _gen_path(self, run_id: str) -> Path:
-        return self.runs_dir / run_id / "generations.parquet"
+        return self._run_dir(run_id) / "generations.parquet"
 
     def write_generations(self, run_id: str, generations: list[Generation]) -> None:
         path = self._gen_path(run_id)
@@ -139,7 +146,7 @@ class RunStore:
     # ---- grades -----------------------------------------------------------
 
     def _grade_path(self, run_id: str) -> Path:
-        return self.runs_dir / run_id / "grades.parquet"
+        return self._run_dir(run_id) / "grades.parquet"
 
     def write_grades(self, run_id: str, grades: list[Grade]) -> None:
         path = self._grade_path(run_id)

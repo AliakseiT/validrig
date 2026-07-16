@@ -13,9 +13,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+
+from harness.pathsafe import is_safe_id
 
 from harness.authoring.adjudicate import adjudicated_case_ids, write_adjudication
 from harness.calibration.agreement import compute_agreement
@@ -44,6 +46,13 @@ def _key_str(key: tuple[str, str, int]) -> str:
 def _parse_key(s: str) -> tuple[str, str, int]:
     case_id, perturbation_id, sample_idx = s.split("::")
     return (case_id, perturbation_id, int(sample_idx))
+
+
+def _guard_id(value: str, kind: str) -> str:
+    """Reject unsafe path-parameter ids with a 400 before any filesystem use."""
+    if not is_safe_id(value):
+        raise HTTPException(status_code=400, detail=f"invalid {kind}")
+    return value
 
 
 def create_app(
@@ -103,6 +112,7 @@ def create_app(
 
     @app.get("/calibrate/{run_id}", response_class=HTMLResponse)
     def calibrate_run(request: Request, run_id: str):
+        _guard_id(run_id, "run_id")
         sample = _sample_for(run_id)
         graded = calib_store.graded_keys(run_id)
         rows = [
@@ -116,6 +126,7 @@ def create_app(
 
     @app.get("/calibrate/{run_id}/unit", response_class=HTMLResponse)
     def calibrate_unit(request: Request, run_id: str, key: str):
+        _guard_id(run_id, "run_id")
         content_key = _parse_key(key)
         documents = _documents_for(run_id)
         gens = {(g.case_id, g.perturbation_id, g.sample_idx): g for g in store.read_generations(run_id)}
@@ -136,6 +147,7 @@ def create_app(
 
     @app.post("/calibrate/{run_id}/unit")
     async def submit_unit(request: Request, run_id: str):
+        _guard_id(run_id, "run_id")
         form = await request.form()
         content_key = _parse_key(str(form["key"]))
         item_scores: dict[str, float] = {}
@@ -158,6 +170,7 @@ def create_app(
 
     @app.get("/agreement/{run_id}", response_class=HTMLResponse)
     def agreement_view(request: Request, run_id: str):
+        _guard_id(run_id, "run_id")
         agreement = compute_agreement(
             store.read_grades(run_id), calib_store.read_human_grades(run_id)
         )
@@ -189,6 +202,7 @@ def create_app(
 
     @app.get("/adjudicate/{case_id}", response_class=HTMLResponse)
     def adjudicate_case(request: Request, case_id: str):
+        _guard_id(case_id, "case_id")
         case = pack.case(case_id)
         # BLIND: show the source document only, never any model output.
         return _TEMPLATES.TemplateResponse(
@@ -206,6 +220,9 @@ def create_app(
     async def submit_adjudication(request: Request, case_id: str):
         if pack_dir is None:
             return RedirectResponse(url="/adjudicate", status_code=303)
+        _guard_id(case_id, "case_id")
+        if pack.case(case_id) is None:
+            raise HTTPException(status_code=400, detail="unknown case_id")
         form = await request.form()
         values: dict[str, float] = {}
         for item in pack.rubric.items:

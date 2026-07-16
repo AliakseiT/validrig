@@ -15,10 +15,15 @@ import json
 from pathlib import Path
 
 from harness.models.pack import Adjudication
+from harness.pathsafe import confined_path, require_safe_id
 
 
 def adjudication_path(pack_dir: str | Path, case_id: str) -> Path:
-    return Path(pack_dir) / "rubric" / "adjudication" / f"{case_id}.json"
+    # case_id comes from untrusted input (URL path in the UI). Validate it and
+    # confine the resolved path so it cannot escape the adjudication directory.
+    require_safe_id(case_id, "case_id")
+    base = Path(pack_dir) / "rubric" / "adjudication"
+    return confined_path(base, f"{case_id}.json")
 
 
 def write_adjudication(pack_dir: str | Path, adjudication: Adjudication) -> Path:
