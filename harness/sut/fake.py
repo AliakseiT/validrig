@@ -7,7 +7,7 @@ function of ``(document, system_prompt, seed)``: no network, no clock, no RNG
 state.
 
 It is deliberately generic — it contains no use-case knowledge. It produces a
-board-brief-shaped output that echoes the salient content of the input document,
+structured-summary-shaped output that echoes the salient content of the input,
 so any evidence present in the document survives into the output (baseline scores
 well) and disappears when an element is ablated (score drops, revealing that
 element's information value).
@@ -59,7 +59,7 @@ class FakeModel(SUTAdapter):
         findings = _salient_lines(document)
         body = "\n".join(f"- {line}" for line in findings)
         raw_output = (
-            "TUMOR BOARD BRIEF (synthetic model output)\n"
+            "STRUCTURED SUMMARY (synthetic model output)\n"
             f"[model_version={self.model_version} sig={signature}]\n"
             "FINDINGS:\n"
             f"{body}\n"
