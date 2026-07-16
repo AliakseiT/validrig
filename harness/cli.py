@@ -11,6 +11,13 @@ from pathlib import Path
 from harness.diff import diff_runs
 from harness.execute import run_battery
 from harness.packio.loader import load_pack
+from harness.qms.mappers import build_change_request, build_vv_plan, build_vv_report
+from harness.qms.render import (
+    render_change_request_md,
+    render_vv_report_md,
+    render_yaml,
+    write_text,
+)
 from harness.store.runstore import RunStore
 from harness.version import ENGINE_VERSION
 
@@ -64,6 +71,56 @@ def _cmd_diff(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_qms(args: argparse.Namespace) -> int:
+    pack = load_pack(args.pack)
+    store = RunStore(args.out)
+    run = store.read_run(args.run)
+    battery = pack.battery(run.pins.battery_id)
+    if battery is None:
+        raise KeyError(f"pack has no battery '{run.pins.battery_id}' for this run")
+    grades = store.read_grades(args.run)
+    validation_report = store.read_report(args.run) or {}
+    contract = store.read_contract(args.run) or {}
+
+    qms_dir = store.runs_dir / args.run / "qms"
+    qms_dir.mkdir(parents=True, exist_ok=True)
+
+    plan = build_vv_plan(pack, battery)
+    report = build_vv_report(
+        pack, battery, run.pins, run.meta, grades, validation_report, contract
+    )
+    write_text(qms_dir / "vv_plan.yml", render_yaml(plan))
+    write_text(qms_dir / "vv_report.md", render_vv_report_md(report))
+    write_text(qms_dir / "vv_report.json", json.dumps(report, indent=2, sort_keys=True))
+
+    s = report["summary_of_results"]
+    print(f"QMS records for run {args.run} (baseline {report['attestation']['qms_baseline_tag']}):")
+    print(f"  V&V plan:   {qms_dir / 'vv_plan.yml'}")
+    print(
+        f"  V&V report: {qms_dir / 'vv_report.md'} "
+        f"[{s['passed']}/{s['total_test_cases']} passed, "
+        f"recommendation={report['release_recommendation']}]"
+    )
+    return 0
+
+
+def _cmd_qms_change(args: argparse.Namespace) -> int:
+    store = RunStore(args.out)
+    diff = diff_runs(store, args.baseline, args.candidate)
+    record = build_change_request(diff)
+
+    qms_dir = store.root / "qms"
+    qms_dir.mkdir(parents=True, exist_ok=True)
+    stem = f"change_{args.baseline}__{args.candidate}"
+    write_text(qms_dir / f"{stem}.md", render_change_request_md(record))
+    write_text(qms_dir / f"{stem}.json", json.dumps(record, indent=2, sort_keys=True))
+
+    print(f"QMS change request: {record['metadata']['change_id']}")
+    print(f"  {record['impact_assessment']['safety_performance_impact']}")
+    print(f"  written: {qms_dir / f'{stem}.md'}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="harness", description="The Harness Factory engine")
     parser.add_argument("--version", action="version", version=f"harness {ENGINE_VERSION}")
@@ -81,6 +138,18 @@ def build_parser() -> argparse.ArgumentParser:
     diff.add_argument("--baseline", required=True, help="baseline run id")
     diff.add_argument("--candidate", required=True, help="candidate run id")
     diff.set_defaults(func=_cmd_diff)
+
+    qms = sub.add_parser("qms", help="emit QMS V&V plan + report for a run")
+    qms.add_argument("pack", type=Path, help="path to the pack directory")
+    qms.add_argument("--run", required=True, help="run id to render QMS records for")
+    qms.add_argument("--out", type=Path, default=Path("./runs"), help="run store root")
+    qms.set_defaults(func=_cmd_qms)
+
+    qms_change = sub.add_parser("qms-change", help="emit a QMS change request from a run diff")
+    qms_change.add_argument("--out", type=Path, default=Path("./runs"), help="run store root")
+    qms_change.add_argument("--baseline", required=True, help="baseline run id")
+    qms_change.add_argument("--candidate", required=True, help="candidate run id")
+    qms_change.set_defaults(func=_cmd_qms_change)
 
     return parser
 
