@@ -22,9 +22,16 @@ python3.12 -m venv .venv && .venv/bin/pip install -e ".[dev]"
 |-----------|--------|-------|
 | **M1 engine core** | ✅ complete | pack loader, casebank, LLM-call SUT adapter (+ OpenAI-compatible, mock-tested), ablation+format axes, judge grading, append-only SQLite+parquet store, bootstrap stats, InputContract + ValidationReport, `hello-tumor-board` demo, end-to-end + determinism + zero-leak gates |
 | **M2 tumor-board tooling** | 🟡 partial | ✅ DE **language axis** + battery axis-scoping + multilingual demo. ❌ deferred: rubric authoring/adjudication UI, PDF/OCR ingestion (need human/design input — not suitable for unattended build) |
-| **M3 regression discipline** | 🟡 core done | ✅ battery pinning, **RegressionDiff** (item + per-element + aggregate w/ bootstrap significance), acceptance gating, CLI `diff`. ❌ deferred: judge calibration workflow (needs the review UI) |
+| **M3 regression discipline** | 🟡 core done | ✅ battery pinning, **RegressionDiff** (item + per-element + aggregate w/ bootstrap significance), acceptance gating, CLI `diff`. ❌ remaining: real pinned LLM judge + judge-calibration gate — see `docs/proposals/2026-07-16-m3-regression-fixes.md` |
 | **M4 agent SUTs** | ⬜ not started | trace protocol/tool mocks/process rubrics — schema seams exist (`SUTSpec.kind`, `Trace`/`Step`) |
 | **M5 monitoring** | ⬜ not started | — |
+| **QMS integration (§6)** | 🟡 core done | ✅ maps runs → **r05** (`QMS-2026-07-09-R005`) V&V plan, V&V report (baseline verdict; perturbations as characterization), and change request (from RegressionDiff); attestation over pinned inputs; unsigned drafts; `harness qms` / `qms-change`. ❌ deferred: PMS periodic report + AIMS event (need M5 monitoring inputs) |
+
+## Proposals (design docs, not yet built)
+
+- `docs/proposals/2026-07-16-m3-regression-fixes.md` — real pinned LLM judge + judge-calibration gate
+- `docs/proposals/2026-07-16-m2-tooling-fixes.md` — adjudication ingestion, pseudonymization boundary, PDF/OCR, rubric authoring CLI
+- `docs/proposals/2026-07-16-adjudication-calibration-ui.md` — the FastAPI human-in-the-loop review UI
 
 ## Design guarantees proven by tests
 
