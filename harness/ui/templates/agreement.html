@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Judge–human agreement</h1>
+<p class="muted">Run <code>{{ run_id }}</code> · gate threshold κ ≥ {{ kappa_min }}</p>
+
+<p>Overall gate:
+  <span class="pill {{ gate.status }}">{{ gate.status }}</span>
+  {% if gate.blocks_report_issuance %}<strong>— report issuance blocked</strong>{% endif %}
+</p>
+
+<table>
+  <thead><tr><th>Rubric item</th><th>n</th><th>% agreement</th><th>κ</th><th>Gate</th></tr></thead>
+  <tbody>
+  {% for item_id, s in agreement["items"].items() %}
+    <tr>
+      <td>{{ item_id }}</td>
+      <td>{{ s.n }}</td>
+      <td>{{ "%.0f%%"|format(s.percent_agreement * 100) if s.percent_agreement is not none else "—" }}</td>
+      <td>{{ "%.2f"|format(s.kappa) if s.kappa is not none else "—" }}</td>
+      <td><span class="pill {{ gate['items'][item_id].status }}">{{ gate['items'][item_id].status }}</span></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+{% if gate.status == "advisory_low_n" %}
+<p class="muted">Sample is underpowered (n &lt; {{ gate.min_n }}); κ is advisory, not blocking.
+Grade more sampled generations to reach a reliable verdict.</p>
+{% endif %}
+
+<p><a href="/calibrate/{{ run_id }}">← Back to grading</a></p>
+{% endblock %}

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Calibration Review{% endblock %}</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: system-ui, -apple-system, sans-serif; max-width: 960px;
+           margin: 0 auto; padding: 1.5rem; line-height: 1.5; }
+    h1 { font-size: 1.4rem; } h2 { font-size: 1.1rem; }
+    a { color: #2563eb; text-decoration: none; } a:hover { text-decoration: underline; }
+    table { border-collapse: collapse; width: 100%; margin: 0.5rem 0; }
+    th, td { border: 1px solid #8884; padding: 0.4rem 0.6rem; text-align: left; font-size: 0.92rem; }
+    th { background: #8881; }
+    .pill { display: inline-block; padding: 0.1rem 0.5rem; border-radius: 999px; font-size: 0.8rem; }
+    .pass { background: #16a34a22; color: #16a34a; }
+    .block { background: #dc262622; color: #dc2626; }
+    .advisory_low_n, .no_data { background: #ca8a0422; color: #ca8a04; }
+    .doc { background: #8881; padding: 0.75rem; border-radius: 6px; white-space: pre-wrap;
+           font-size: 0.85rem; max-height: 18rem; overflow: auto; }
+    .nav { font-size: 0.85rem; margin-bottom: 1rem; color: #8888; }
+    fieldset { border: 1px solid #8884; border-radius: 6px; margin: 0.5rem 0; }
+    button { padding: 0.4rem 0.9rem; font-size: 0.95rem; cursor: pointer; }
+    .muted { color: #8888; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <div class="nav"><a href="/">← Calibration dashboard</a></div>
+  {% block content %}{% endblock %}
+  <hr>
+  <p class="muted">Draft review tool — grades are evidence for a human reviewer, not an approval.
+  UX not yet clinically reviewed.</p>
+</body>
+</html>

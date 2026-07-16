@@ -19,13 +19,19 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8"]
+dev = ["pytest>=8", "fastapi>=0.110", "jinja2>=3", "python-multipart>=0.0.9", "uvicorn>=0.29"]
+# Human-in-the-loop calibration/adjudication review UI. Kept out of the core so a
+# site that only runs batteries never installs a web stack.
+ui = ["fastapi>=0.110", "jinja2>=3", "python-multipart>=0.0.9", "uvicorn>=0.29"]
 
 [project.scripts]
 harness = "harness.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["harness*"]
+
+[tool.setuptools.package-data]
+"harness.ui" = ["templates/*.html"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

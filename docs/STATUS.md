@@ -10,10 +10,12 @@ first-class **fake model** and **fake judge**.
 
 ```bash
 python3.12 -m venv .venv && .venv/bin/pip install -e ".[dev]"
-.venv/bin/pytest -q                                   # 75 tests, ~2s
+.venv/bin/pytest -q                                   # 107 tests, ~3s
 .venv/bin/harness run packs/demo-tumor-board --battery smoke --out ./runs --seed 1
 .venv/bin/harness run packs/demo-tumor-board --battery regression --out ./runs --seed 1
 .venv/bin/harness diff --out ./runs --baseline <run_a> --candidate <run_b>
+.venv/bin/harness qms packs/demo-tumor-board --run <run_id> --out ./runs
+.venv/bin/harness ui packs/demo-tumor-board --out ./runs   # calibration review UI (needs [ui] extra)
 ```
 
 ## Milestone status
@@ -22,16 +24,17 @@ python3.12 -m venv .venv && .venv/bin/pip install -e ".[dev]"
 |-----------|--------|-------|
 | **M1 engine core** | ✅ complete | pack loader, casebank, LLM-call SUT adapter (+ OpenAI-compatible, mock-tested), ablation+format axes, judge grading, append-only SQLite+parquet store, bootstrap stats, InputContract + ValidationReport, `demo-tumor-board` demo, end-to-end + determinism + zero-leak gates |
 | **M2 tumor-board tooling** | 🟡 partial | ✅ DE **language axis** + battery axis-scoping + multilingual demo. ❌ deferred: rubric authoring/adjudication UI, PDF/OCR ingestion (need human/design input — not suitable for unattended build) |
-| **M3 regression discipline** | 🟡 mostly done | ✅ battery pinning, **RegressionDiff**, acceptance gating, CLI `diff`, and now a native **G-Eval `LLMJudge`** (Gap 1): reference-free, pinned evaluation steps, record-once/replay, `judge_error` distinct from score 0, judge-change → new run_id. DeepEval evaluated and rejected (29 deps, grpcio, default telemetry). ❌ remaining: **judge-calibration gate** (Gap 2 — needs human double-grading via the review UI) |
+| **M3 regression discipline** | 🟢 done (core) | ✅ battery pinning, **RegressionDiff**, acceptance gating, CLI `diff`, native **G-Eval `LLMJudge`** (Gap 1), and now the **judge-calibration loop** (Gap 2): deterministic sampling, append-only human grades, Cohen's κ + % agreement, and a standalone **calibration gate** (advisory when underpowered). Surfaced in the review UI. Gate is kept out of the synchronous run/report path by design (calibration is asynchronous) |
+| **Review UI (M2/M3)** | 🟡 v1 (calibration) | ✅ FastAPI + Jinja2 calibration review (dashboard, grade sampled generations, agreement/κ + gate), behind the `[ui]` extra; binds localhost by default; never mutates immutable grades. Data path tested via TestClient + live uvicorn smoke. ❌ deferred: clinical UX review, adjudication authoring (write-only until loader ingests it), multi-rater, SSO |
 | **M4 agent SUTs** | ⬜ not started | trace protocol/tool mocks/process rubrics — schema seams exist (`SUTSpec.kind`, `Trace`/`Step`) |
 | **M5 monitoring** | ⬜ not started | — |
 | **QMS integration (§6)** | 🟡 core done | ✅ maps runs → **r05** (`QMS-2026-07-09-R005`) V&V plan, V&V report (baseline verdict; perturbations as characterization), and change request (from RegressionDiff); attestation over pinned inputs; unsigned drafts; `harness qms` / `qms-change`. ❌ deferred: PMS periodic report + AIMS event (need M5 monitoring inputs) |
 
-## Proposals (design docs, not yet built)
+## Proposals
 
-- `docs/proposals/2026-07-16-m3-regression-fixes.md` — real pinned LLM judge + judge-calibration gate
-- `docs/proposals/2026-07-16-m2-tooling-fixes.md` — adjudication ingestion, pseudonymization boundary, PDF/OCR, rubric authoring CLI
-- `docs/proposals/2026-07-16-adjudication-calibration-ui.md` — the FastAPI human-in-the-loop review UI
+- `docs/proposals/2026-07-16-m3-regression-fixes.md` — LLM judge ✅ shipped; calibration gate ✅ shipped
+- `docs/proposals/2026-07-16-adjudication-calibration-ui.md` — calibration review UI ✅ v1 shipped
+- `docs/proposals/2026-07-16-m2-tooling-fixes.md` — adjudication ingestion, pseudonymization boundary, PDF/OCR, rubric authoring CLI (not yet built)
 
 ## Design guarantees proven by tests
 

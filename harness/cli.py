@@ -121,6 +121,28 @@ def _cmd_qms_change(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_ui(args: argparse.Namespace) -> int:
+    try:
+        import uvicorn
+
+        from harness.calibration.store import CalibrationStore
+        from harness.ui.app import create_app
+    except ImportError:
+        print(
+            "The review UI needs the 'ui' extra: pip install 'harness-factory[ui]'",
+            file=sys.stderr,
+        )
+        return 1
+
+    pack = load_pack(args.pack)
+    store = RunStore(args.out)
+    calib_store = CalibrationStore(args.out)
+    app = create_app(pack, store, calib_store, grader_id=args.grader)
+    print(f"Calibration review UI for pack {pack.manifest.id} at http://{args.host}:{args.port}")
+    uvicorn.run(app, host=args.host, port=args.port)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="harness", description="The Harness Factory engine")
     parser.add_argument("--version", action="version", version=f"harness {ENGINE_VERSION}")
@@ -150,6 +172,14 @@ def build_parser() -> argparse.ArgumentParser:
     qms_change.add_argument("--baseline", required=True, help="baseline run id")
     qms_change.add_argument("--candidate", required=True, help="candidate run id")
     qms_change.set_defaults(func=_cmd_qms_change)
+
+    ui = sub.add_parser("ui", help="launch the calibration review UI (needs the 'ui' extra)")
+    ui.add_argument("pack", type=Path, help="path to the pack directory")
+    ui.add_argument("--out", type=Path, default=Path("./runs"), help="run store root")
+    ui.add_argument("--grader", default="reviewer", help="grader identity for recorded grades")
+    ui.add_argument("--host", default="127.0.0.1", help="bind host (default localhost only)")
+    ui.add_argument("--port", type=int, default=8080, help="bind port")
+    ui.set_defaults(func=_cmd_ui)
 
     return parser
 
