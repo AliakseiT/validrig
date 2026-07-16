@@ -41,6 +41,10 @@ class SUTBinding(BaseModel):
     endpoint: str | None = None
     params: dict[str, Any] = Field(default_factory=dict)
     system_prompt: str | None = None
+    # Name of the environment variable holding the API key (never the key itself).
+    # Only the NAME is stored/hashed, so no secret enters sut_hash, Pins, or any
+    # persisted record.
+    api_key_env: str | None = None
 
 
 SUTKind = Literal["llm_call", "chain", "agent", "external_api"]

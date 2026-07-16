@@ -16,6 +16,7 @@ import httpx
 
 from harness.models.results import TokenUsage
 from harness.models.sut import SUTBinding, Step, Trace
+from harness.sut.auth import auth_headers
 from harness.sut.base import GenerationOutput, SUTAdapter
 
 
@@ -41,7 +42,9 @@ class OpenAICompatModel(SUTAdapter):
             "messages": self._build_messages(document),
             **self.binding.params,
         }
-        response = self._client.post(self.binding.endpoint, json=payload)
+        response = self._client.post(
+            self.binding.endpoint, json=payload, headers=auth_headers(self.binding.api_key_env)
+        )
         response.raise_for_status()
         data = response.json()
 

@@ -27,6 +27,7 @@ import httpx
 from harness.judge.base import ItemGrade, Judge
 from harness.models.pack import RubricItem
 from harness.models.sut import SUTBinding
+from harness.sut.auth import auth_headers
 
 
 @dataclass(frozen=True)
@@ -157,7 +158,10 @@ class LLMJudge(Judge):
             **self.binding.params,
         }
         try:
-            response = self._client.post(self.binding.endpoint, json=payload)
+            response = self._client.post(
+                self.binding.endpoint, json=payload,
+                headers=auth_headers(self.binding.api_key_env),
+            )
             response.raise_for_status()
             content = response.json()["choices"][0]["message"]["content"]
         except (httpx.HTTPError, KeyError, IndexError, ValueError) as exc:
