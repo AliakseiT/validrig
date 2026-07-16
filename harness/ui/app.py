@@ -17,13 +17,15 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
+from harness.authoring.adjudicate import adjudicated_case_ids, write_adjudication
 from harness.calibration.agreement import compute_agreement
 from harness.calibration.gate import evaluate_gate
 from harness.calibration.models import HumanGrade
 from harness.calibration.sample import select_calibration_sample
 from harness.calibration.store import CalibrationStore
-from harness.models.pack import Pack
+from harness.models.pack import Adjudication, Pack
 from harness.perturb.expand import expand_battery
+from harness.perturb.format import DOCUMENT_KEY, FormatTransformer
 from harness.store.runstore import RunStore
 
 _TEMPLATES = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
@@ -50,8 +52,9 @@ def create_app(
     calib_store: CalibrationStore,
     grader_id: str = "reviewer",
     now: Callable[[], str] | None = None,
+    pack_dir: str | Path | None = None,
 ) -> FastAPI:
-    app = FastAPI(title="Harness Factory — Calibration Review")
+    app = FastAPI(title="Harness Factory — Review")
     clock = now or _utc_now
     kappa_min = pack.acceptance.thresholds.get("judge_agreement_kappa_min", DEFAULT_KAPPA_MIN)
     fraction = pack.judge.calibration_fraction
@@ -164,5 +167,60 @@ def create_app(
             "agreement.html",
             {"run_id": run_id, "agreement": agreement, "gate": gate, "kappa_min": kappa_min},
         )
+
+    # ---- adjudication (per-case gold authoring; blind mode) ---------------
+
+    def _render_case_document(case) -> str:
+        rendered = FormatTransformer().expand(case, pack.case_schema, {"style": "structured"})
+        return str(rendered[0].case.elements[DOCUMENT_KEY])
+
+    @app.get("/adjudicate", response_class=HTMLResponse)
+    def adjudicate_list(request: Request):
+        done = adjudicated_case_ids(pack_dir) if pack_dir else set()
+        rows = [
+            {"case_id": c.case_id, "adjudicated": c.case_id in done}
+            for c in sorted(pack.cases, key=lambda c: c.case_id)
+        ]
+        return _TEMPLATES.TemplateResponse(
+            request,
+            "adjudicate_list.html",
+            {"rows": rows, "writable": pack_dir is not None},
+        )
+
+    @app.get("/adjudicate/{case_id}", response_class=HTMLResponse)
+    def adjudicate_case(request: Request, case_id: str):
+        case = pack.case(case_id)
+        # BLIND: show the source document only, never any model output.
+        return _TEMPLATES.TemplateResponse(
+            request,
+            "adjudicate_form.html",
+            {
+                "case_id": case_id,
+                "document": _render_case_document(case) if case else "(case not found)",
+                "items": pack.rubric.items,
+                "writable": pack_dir is not None,
+            },
+        )
+
+    @app.post("/adjudicate/{case_id}")
+    async def submit_adjudication(request: Request, case_id: str):
+        if pack_dir is None:
+            return RedirectResponse(url="/adjudicate", status_code=303)
+        form = await request.form()
+        values: dict[str, float] = {}
+        for item in pack.rubric.items:
+            field = f"score__{item.id}"
+            if field in form and str(form[field]) != "":
+                values[item.id] = float(str(form[field]))
+        write_adjudication(
+            pack_dir,
+            Adjudication(
+                case_id=case_id,
+                adjudicated_by=grader_id,
+                adjudicated_at=clock(),
+                values=values,
+            ),
+        )
+        return RedirectResponse(url="/adjudicate", status_code=303)
 
     return app

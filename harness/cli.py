@@ -217,7 +217,7 @@ def _cmd_ui(args: argparse.Namespace) -> int:
     pack = load_pack(args.pack)
     store = RunStore(args.out)
     calib_store = CalibrationStore(args.out)
-    app = create_app(pack, store, calib_store, grader_id=args.grader)
+    app = create_app(pack, store, calib_store, grader_id=args.grader, pack_dir=args.pack)
     print(f"Calibration review UI for pack {pack.manifest.id} at http://{args.host}:{args.port}")
     uvicorn.run(app, host=args.host, port=args.port)
     return 0

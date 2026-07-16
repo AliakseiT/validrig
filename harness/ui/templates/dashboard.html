@@ -1,8 +1,10 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Calibration dashboard</h1>
+<h1>Review dashboard</h1>
 <p class="muted">Grader: <strong>{{ grader_id }}</strong> ·
   sampling {{ (fraction * 100) | round(1) }}% per run · gate κ ≥ {{ kappa_min }}</p>
+<p><a href="/adjudicate">→ Adjudication (establish per-case gold, blind)</a></p>
+<h2>Calibration (double-grade sampled generations)</h2>
 
 {% if not runs %}
   <p>No runs found in this store.</p>

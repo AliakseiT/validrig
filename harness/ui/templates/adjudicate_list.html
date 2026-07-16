@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Adjudication — establish per-case gold</h1>
+{% if not writable %}
+<p class="pill block">Read-only: the UI was started without a writable pack directory.</p>
+{% endif %}
+<p class="muted">Blind grading: you score each case against the rubric without seeing any model output.</p>
+<table>
+  <thead><tr><th>Case</th><th>Status</th><th></th></tr></thead>
+  <tbody>
+  {% for row in rows %}
+    <tr>
+      <td>{{ row.case_id }}</td>
+      <td>{% if row.adjudicated %}<span class="pill pass">adjudicated</span>{% else %}<span class="muted">pending</span>{% endif %}</td>
+      <td><a href="/adjudicate/{{ row.case_id }}">{{ "re-adjudicate" if row.adjudicated else "adjudicate" }}</a></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

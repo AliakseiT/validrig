@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Adjudicate case {{ case_id }}</h1>
+<p class="muted">Blind mode — no model output is shown. Establish the reference (gold) grade.</p>
+
+<h2>Source document</h2>
+<div class="doc">{{ document }}</div>
+
+<h2>Reference grade</h2>
+<form method="post" action="/adjudicate/{{ case_id }}">
+  {% for item in items %}
+  <fieldset>
+    <legend><strong>{{ item.id }}</strong>{% if item.critical %} · critical{% endif %}</legend>
+    <p>{{ item.statement }}</p>
+    {% if item.type == "binary" %}
+      <label><input type="radio" name="score__{{ item.id }}" value="{{ item.max_score }}" required> pass</label>
+      <label><input type="radio" name="score__{{ item.id }}" value="0"> fail</label>
+    {% else %}
+      <label>score (0–{{ item.max_score }}):
+        <input type="number" name="score__{{ item.id }}" min="0" max="{{ item.max_score }}"
+               step="0.1" required></label>
+    {% endif %}
+  </fieldset>
+  {% endfor %}
+  <button type="submit"{% if not writable %} disabled{% endif %}>Save gold &amp; return</button>
+  {% if not writable %}<p class="pill block">Read-only — cannot save.</p>{% endif %}
+</form>
+{% endblock %}
