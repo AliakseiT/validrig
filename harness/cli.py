@@ -12,6 +12,8 @@ from harness.diff import diff_runs
 from harness.execute import run_battery
 from harness.packio.loader import load_pack
 from harness.qms.calibration_record import build_calibration_status
+from harness.qms.dossier import build_dossier
+from harness.qms.dossier_html import render_dossier_html
 from harness.qms.mappers import build_change_request, build_vv_plan, build_vv_report
 from harness.qms.package import build_package_manifest
 from harness.qms.render import (
@@ -147,6 +149,29 @@ def _calibration_summary(pack, run, store, out_root):
     kappa_min = pack.acceptance.thresholds.get("judge_agreement_kappa_min", 0.6)
     gate = evaluate_gate(agreement, kappa_min)
     return {"agreement": agreement, "gate": gate}
+
+
+def _cmd_dossier(args: argparse.Namespace) -> int:
+    pack = load_pack(args.pack)
+    store = RunStore(args.out)
+    run = store.read_run(args.run)
+    battery = pack.battery(run.pins.battery_id)
+    if battery is None:
+        raise KeyError(f"pack has no battery '{run.pins.battery_id}' for this run")
+    calibration = _calibration_summary(pack, run, store, args.out)
+    dossier = build_dossier(
+        pack, battery, run, store.read_grades(args.run),
+        store.read_report(args.run) or {}, store.read_contract(args.run) or {},
+        calibration=calibration,
+    )
+    out_dir = store.runs_dir / args.run / "qms"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    write_text(out_dir / "dossier.html", render_dossier_html(dossier))
+    write_text(out_dir / "dossier.json", json.dumps(dossier, indent=2, sort_keys=True))
+    rec = dossier["vv_report"]["release_recommendation"]
+    print(f"validation dossier for run {args.run}: recommendation={rec}")
+    print(f"  {out_dir / 'dossier.html'}  (open in a browser; Cmd/Ctrl-P to print)")
+    return 0
 
 
 def _cmd_qms_change(args: argparse.Namespace) -> int:
@@ -302,6 +327,12 @@ def build_parser() -> argparse.ArgumentParser:
     qms_change.add_argument("--baseline", required=True, help="baseline run id")
     qms_change.add_argument("--candidate", required=True, help="candidate run id")
     qms_change.set_defaults(func=_cmd_qms_change)
+
+    dossier = sub.add_parser("dossier", help="render a consolidated printable HTML validation dossier for a run")
+    dossier.add_argument("pack", type=Path, help="path to the pack directory")
+    dossier.add_argument("--run", required=True, help="run id")
+    dossier.add_argument("--out", type=Path, default=Path("./runs"), help="run store root")
+    dossier.set_defaults(func=_cmd_dossier)
 
     monitor = sub.add_parser("monitor", help="ingest production events -> monitoring snapshot + drift + PMS/AIMS")
     monitor.add_argument("pack", type=Path, help="path to the pack directory")
