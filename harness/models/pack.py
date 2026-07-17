@@ -29,6 +29,15 @@ class ElementSpec(_Frozen):
     language: str
     source_system: str | None = None
     required: bool = True
+    # How the ingestion boundary must treat this element for PHI:
+    #   "free_text"  -> run NER pseudonymization (default; unclassified is never
+    #                   skipped — safe default).
+    #   "identifier" -> the whole value IS a direct identifier (MRN, accession,
+    #                   name field): capture it before redaction, hard-scrub that
+    #                   exact value from every element, then reversibly encrypt it.
+    #   "non_phi"    -> a coded / non-identifying value (e.g. a stage code); left
+    #                   as-is. Choose this only when the field cannot carry PHI.
+    pii: Literal["free_text", "identifier", "non_phi"] = "free_text"
 
 
 class CaseSchema(_Frozen):

@@ -215,6 +215,80 @@ def _cmd_lint(args: argparse.Namespace) -> int:
     return 1 if has_errors(findings) else 0
 
 
+def _cmd_ingest(args: argparse.Namespace) -> int:
+    from harness.ingest.pipeline import INGEST_GUARANTEE, IngestError, ingest_case
+    from harness.pathsafe import require_safe_id
+
+    try:
+        pack = load_pack(args.pack)
+    except Exception as exc:
+        print(f"error: pack failed to load: {exc}", file=sys.stderr)
+        return 2
+
+    raw_dir = Path(args.raw)
+    raw_files = sorted(raw_dir.glob("*.json")) if raw_dir.is_dir() else []
+    if not raw_files:
+        print(f"error: no raw case JSON files in {raw_dir}", file=sys.stderr)
+        return 1
+
+    case_out = Path(args.pack) / "casebank" / "cases"
+    store_root = (Path(args.pack) / "casebank").resolve()
+    reid_out = Path(args.reid_out).resolve()
+    # The re-id bundle is hospital-side only; it must never land anywhere in the
+    # casebank (the engine store).
+    if reid_out == store_root or store_root in reid_out.parents:
+        print("error: --reid-out must be outside the pack casebank (re-id material "
+              "is hospital-side only)", file=sys.stderr)
+        return 2
+
+    if args.backend == "presidio":
+        from harness.ingest.presidio_backend import PresidioPseudonymizer
+        try:
+            pseudo = PresidioPseudonymizer(language=args.language)
+        except Exception as exc:
+            print(f"error: could not init presidio ({exc}); install the [deid] extra "
+                  "and the spaCy model", file=sys.stderr)
+            return 2
+    else:
+        print(f"error: unknown backend {args.backend!r}", file=sys.stderr)
+        return 2
+
+    case_out.mkdir(parents=True, exist_ok=True)
+    reid_out.mkdir(parents=True, exist_ok=True)
+
+    n = 0
+    for f in raw_files:
+        doc = json.loads(f.read_text(encoding="utf-8"))
+        case_id = require_safe_id(str(doc["case_id"]), "case_id")
+        if doc.get("translations"):
+            print(f"error: case '{case_id}' carries translations — ingest the "
+                  "pre-translation source; translated text is not yet pseudonymized",
+                  file=sys.stderr)
+            return 2
+        try:
+            store, reid, report = ingest_case(
+                doc.get("elements", {}), pack.case_schema, pseudo, case_id=case_id)
+        except IngestError as exc:  # post-condition failure = refuse to write
+            print(f"error: {exc}", file=sys.stderr)
+            return 3
+
+        store_case = {"case_id": case_id, "elements": store,
+                      "ground_truth": doc.get("ground_truth", {})}
+        (case_out / f"{case_id}.json").write_text(
+            json.dumps(store_case, indent=2, sort_keys=True), encoding="utf-8")
+        (reid_out / f"{case_id}.reid.json").write_text(
+            json.dumps(reid, indent=2, sort_keys=True), encoding="utf-8")
+        print(f"  {case_id}: id_fields={report.identifier_fields} "
+              f"known_ids={report.known_identifiers} ner={report.entity_types} "
+              f"residual_clean={report.residual_clean}")
+        n += 1
+
+    print(f"ingested {n} case(s) -> {case_out}")
+    print(f"re-id material (hospital-side) -> {reid_out}")
+    print(f"guarantee: {INGEST_GUARANTEE}")
+    return 0
+
+
 def _cmd_new(args: argparse.Namespace) -> int:
     from harness.authoring.scaffold import scaffold_pack
 
@@ -349,6 +423,15 @@ def build_parser() -> argparse.ArgumentParser:
     lint = sub.add_parser("lint", help="check a pack for authoring gaps")
     lint.add_argument("pack", type=Path, help="path to the pack directory")
     lint.set_defaults(func=_cmd_lint)
+
+    ingest = sub.add_parser("ingest", help="pseudonymize raw cases into a pack casebank (enforced boundary)")
+    ingest.add_argument("pack", help="pack directory (provides the case schema)")
+    ingest.add_argument("--raw", required=True, help="directory of raw case JSON files")
+    ingest.add_argument("--reid-out", required=True, dest="reid_out",
+                        help="hospital-side directory for re-identification material (must be outside the casebank)")
+    ingest.add_argument("--backend", default="presidio", help="pseudonymizer backend")
+    ingest.add_argument("--language", default="en", help="analysis language (e.g. en, de)")
+    ingest.set_defaults(func=_cmd_ingest)
 
     new = sub.add_parser("new", help="scaffold a new runnable pack skeleton")
     new.add_argument("dest", type=Path, help="destination directory for the new pack")

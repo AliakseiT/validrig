@@ -106,16 +106,25 @@ class PresidioPseudonymizer(Pseudonymizer):
             text=out.text,
             entity_types=sorted({r.entity_type for r in results}),
             reversible=True,
-            reid_material={"items": out.items},  # hospital-side only; not for the store
+            # JSON-serializable dicts so the hospital-side re-id bundle is durable;
+            # never persisted in the engine store.
+            reid_material={"items": [it.to_dict() for it in out.items]},
         )
 
     def reidentify(self, result: PseudonymizationResult) -> str:
-        from presidio_anonymizer.entities import OperatorConfig
+        from presidio_anonymizer.entities import OperatorConfig, OperatorResult
 
         items = (result.reid_material or {}).get("items")
         if items is None:
             raise ValueError("no re-identification material on this result")
+        # Accept both live OperatorResult objects and the serialized dict form.
+        entities = [
+            it if not isinstance(it, dict)
+            else OperatorResult(it["start"], it["end"], it["entity_type"],
+                                it["text"], it["operator"])
+            for it in items
+        ]
         return self._deanonymizer.deanonymize(
-            result.text, items,
+            result.text, entities,
             {"DEFAULT": OperatorConfig("decrypt", {"key": self._key()})},
         ).text
