@@ -23,11 +23,40 @@ from harness.sut.base import GenerationOutput, SUTAdapter
 class OpenAICompatModel(SUTAdapter):
     reproducible = False
 
-    def __init__(self, binding: SUTBinding, client: httpx.Client | None = None) -> None:
+    def __init__(
+        self, binding: SUTBinding, client: httpx.Client | None = None, max_retries: int = 3
+    ) -> None:
         if not binding.endpoint:
             raise ValueError("OpenAICompatModel requires binding.endpoint")
         self.binding = binding
-        self._client = client or httpx.Client(timeout=60.0)
+        self._client = client or httpx.Client(timeout=120.0)
+        self.max_retries = max_retries
+
+    def _post(self, payload: dict) -> httpx.Response:
+        """POST with a small retry on transient network/5xx errors.
+
+        Real endpoints blip (disconnects, timeouts, 502/503/429); one flaky call
+        must not kill a whole battery. 4xx (e.g. auth, bad request) fail fast.
+        """
+        headers = auth_headers(self.binding.api_key_env)
+        last: Exception | None = None
+        for attempt in range(self.max_retries):
+            try:
+                resp = self._client.post(self.binding.endpoint, json=payload, headers=headers)
+                if resp.status_code >= 500 or resp.status_code == 429:
+                    last = httpx.HTTPStatusError(
+                        f"transient {resp.status_code}", request=resp.request, response=resp
+                    )
+                    continue
+                resp.raise_for_status()
+                return resp
+            except (httpx.TransportError, httpx.HTTPStatusError) as exc:
+                # HTTPStatusError from raise_for_status is a 4xx here -> don't retry.
+                if isinstance(exc, httpx.HTTPStatusError) and exc.response.status_code < 500 \
+                        and exc.response.status_code != 429:
+                    raise
+                last = exc
+        raise last if last else RuntimeError("request failed")
 
     def _build_messages(self, document: str) -> list[dict[str, str]]:
         messages: list[dict[str, str]] = []
@@ -42,11 +71,7 @@ class OpenAICompatModel(SUTAdapter):
             "messages": self._build_messages(document),
             **self.binding.params,
         }
-        response = self._client.post(
-            self.binding.endpoint, json=payload, headers=auth_headers(self.binding.api_key_env)
-        )
-        response.raise_for_status()
-        data = response.json()
+        data = self._post(payload).json()
 
         content = data["choices"][0]["message"]["content"]
         usage_raw = data.get("usage", {})

@@ -94,3 +94,38 @@ def test_api_key_value_not_in_sut_hash(monkeypatch):
     # the hash covers the env-var NAME, never the secret value
     assert "super-secret-value" not in spec.sut_hash
     assert spec.sut_hash  # computed
+
+
+def test_retries_transient_then_succeeds():
+    import httpx as _httpx
+    from harness.models.sut import SUTBinding as _B
+    calls = {"n": 0}
+
+    def handler(request):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise _httpx.RemoteProtocolError("server disconnected", request=request)
+        return _httpx.Response(200, json={
+            "choices": [{"message": {"content": "recovered"}}],
+            "usage": {"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2}})
+
+    model = OpenAICompatModel(_binding(), client=_httpx.Client(transport=_httpx.MockTransport(handler)))
+    out = model.generate("doc", seed=0)
+    assert out.raw_output == "recovered"
+    assert calls["n"] == 2  # retried once
+
+
+def test_4xx_fails_fast_no_retry():
+    import httpx as _httpx
+    import pytest
+    from harness.models.sut import SUTBinding as _B
+    calls = {"n": 0}
+
+    def handler(request):
+        calls["n"] += 1
+        return _httpx.Response(400, json={"error": "bad request"})
+
+    model = OpenAICompatModel(_binding(), client=_httpx.Client(transport=_httpx.MockTransport(handler)))
+    with pytest.raises(_httpx.HTTPStatusError):
+        model.generate("doc", seed=0)
+    assert calls["n"] == 1  # no retry on 4xx
