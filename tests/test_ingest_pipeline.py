@@ -69,6 +69,15 @@ def test_residual_gate_hard_fails_on_misdeclared_non_phi():
         ingest_case(raw, schema, _Redactor(), case_id="c4")
 
 
+def test_residual_gate_covers_ground_truth():
+    # a known identifier hiding in ground_truth (persisted, not transformed)
+    schema = _schema(mrn="identifier", note="free_text")
+    raw = {"mrn": "7654321", "note": "clean"}
+    with pytest.raises(IngestError, match="ground_truth"):
+        ingest_case(raw, schema, _Redactor(), case_id="c5",
+                    also_gate={"diagnosis": "adenocarcinoma", "ref": "7654321"})
+
+
 def test_scrub_known_tolerant_to_punctuation():
     # captured 7654321 must also catch 765-4321 / 765 4321
     assert "7654321" not in scrub_known("id 7654321", ["7654321"])

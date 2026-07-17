@@ -267,7 +267,8 @@ def _cmd_ingest(args: argparse.Namespace) -> int:
             return 2
         try:
             store, reid, report = ingest_case(
-                doc.get("elements", {}), pack.case_schema, pseudo, case_id=case_id)
+                doc.get("elements", {}), pack.case_schema, pseudo, case_id=case_id,
+                also_gate=doc.get("ground_truth", {}))
         except IngestError as exc:  # post-condition failure = refuse to write
             print(f"error: {exc}", file=sys.stderr)
             return 3

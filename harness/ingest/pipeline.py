@@ -40,9 +40,10 @@ from harness.models.pack import CaseSchema
 #: The exact guarantee `harness ingest` makes. Stated everywhere the pipeline
 #: reports, so the claim can never quietly widen to "no PHI".
 INGEST_GUARANTEE = (
-    "declared identifier fields removed; known identifiers absent from every "
-    "element; de-identification executed on free text. NOT a claim that the free "
-    "text is PHI-free (that is an upper bound — see the de-id recall record)."
+    "declared identifier fields removed; known identifiers absent from the entire "
+    "persisted case (elements and ground_truth); de-identification executed on "
+    "free text. NOT a claim that the free text is PHI-free (that is an upper "
+    "bound — see the de-id recall record)."
 )
 
 
@@ -90,12 +91,19 @@ def ingest_case(
     pseudonymizer: Pseudonymizer,
     *,
     case_id: str = "",
+    also_gate: dict[str, Any] | None = None,
 ) -> tuple[dict[str, str], dict[str, Any], IngestReport]:
     """Pseudonymize one raw case's elements per its schema's ``pii`` classes.
 
     Returns ``(store_elements, reid_material, report)``. ``store_elements`` is
     safe to persist; ``reid_material`` is hospital-side only and must never be
     written to the store.
+
+    ``also_gate`` is other content persisted alongside the elements (e.g. a
+    case's ``ground_truth``): its values are covered by the residual gate but not
+    transformed. A known identifier appearing there is a producer error, so it
+    fails closed rather than being silently scrubbed — the gate must cover the
+    whole persisted artifact, not just the elements.
     """
     id_fields, free_fields, nonphi_fields = [], [], []
     for name in raw_elements:
@@ -135,9 +143,15 @@ def ingest_case(
             if result.reid_material is not None:
                 reid["ner_items"][name] = result.reid_material
 
-    # 4. Post-condition: no known identifier survives anywhere. By construction
-    #    after step 2; a failure here is a bug, so refuse to emit the case.
-    leaks = {n: residual_identifiers(t, known) for n, t in store.items()}
+    # 4. Post-condition: no known identifier survives anywhere in the persisted
+    #    artifact — the elements AND anything gated alongside them (ground_truth).
+    #    By construction after step 2 for elements; for also_gate a hit means the
+    #    producer put an identifier in a non-transformed field. Either way it is a
+    #    bug, so refuse to emit the case.
+    gate_targets = dict(store)
+    for k, v in (also_gate or {}).items():
+        gate_targets[f"ground_truth.{k}"] = "" if v is None else str(v)
+    leaks = {n: residual_identifiers(t, known) for n, t in gate_targets.items()}
     residual_clean = not any(leaks.values())
     if not residual_clean:
         offending = {n: v for n, v in leaks.items() if v}
