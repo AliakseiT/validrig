@@ -59,7 +59,7 @@ def build_pms_report(snapshot: dict[str, Any], drift: dict[str, Any]) -> dict[st
         },
         "attestation": build_attestation_from_dict(snapshot.get("pins")),
         "signatures": unsigned_signoff("Approved PMS Periodic Report",
-                                       ["qa_lead", "management_representative"]),
+                                       ),
     }
 
 
@@ -80,5 +80,5 @@ def build_aims_event(snapshot: dict[str, Any], drift: dict[str, Any]) -> dict[st
         "status": "open",
         "attestation": build_attestation_from_dict(snapshot.get("pins")),
         "signatures": unsigned_signoff("Approved AIMS Event Triage",
-                                       ["qa_lead", "management_representative"]),
+                                       ),
     }

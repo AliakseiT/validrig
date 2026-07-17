@@ -19,7 +19,11 @@ from typing import Any
 from harness.models.pack import BatterySpec, Pack
 from harness.models.results import Grade, Pins, RunMeta
 from harness.perturb.expand import expand_battery
-from harness.qms.attestation import build_attestation, unsigned_signoff
+from harness.qms.attestation import (
+    CLINICAL_SIGNER_ROLES,
+    build_attestation,
+    unsigned_signoff,
+)
 from harness.qms.baseline import TEMPLATE_SOURCES, TEMPLATE_VERSIONS
 
 
@@ -122,7 +126,7 @@ def build_vv_plan(pack: Pack, battery: BatterySpec) -> dict[str, Any]:
                 for i in pack.rubric.items
             ],
             "acceptance_criteria": acceptance_criteria,
-            "signoff": unsigned_signoff("Approved V&V Plan", ["qa_lead", "engineering_lead"]),
+            "signoff": unsigned_signoff("Approved V&V Plan"),
         },
     }
 
@@ -217,7 +221,7 @@ def build_vv_report(
         "release_recommendation": recommendation,
         "attestation": build_attestation(pins, run_meta),
         "signatures": unsigned_signoff(
-            "Approved V&V Evidence and Report", ["qa_lead", "engineering_lead"]
+            "Approved V&V Evidence and Report"
         ),
     }
 
@@ -289,7 +293,7 @@ def build_change_request(diff: dict[str, Any]) -> dict[str, Any]:
             ),
         },
         "controls_and_actions": {
-            "required_approvals": ["qa_lead", "engineering_lead"],
+            "required_approvals": list(CLINICAL_SIGNER_ROLES),
             "required_record_updates": ["verification_validation_report"],
             "verification_activities": ["re-run pinned battery", "review RegressionDiff"],
             "rollback_or_containment_plan": "",
@@ -300,7 +304,7 @@ def build_change_request(diff: dict[str, Any]) -> dict[str, Any]:
             "candidate": build_attestation(_pins_from(candidate["pins"])),
         },
         "signatures": unsigned_signoff(
-            "Approved Change and Impact Assessment", ["qa_lead", "engineering_lead"]
+            "Approved Change and Impact Assessment"
         ),
     }
 

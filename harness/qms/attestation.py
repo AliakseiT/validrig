@@ -55,11 +55,16 @@ def build_attestation_from_dict(
     return block
 
 
-def unsigned_signoff(meaning: str, signer_roles: list[str]) -> dict[str, Any]:
+# Clinical-context signer roles for QMS records: a medical and a quality
+# reviewer. Deliberately not engineering/`*_lead` roles.
+CLINICAL_SIGNER_ROLES = ["medical_reviewer", "quality_reviewer"]
+
+
+def unsigned_signoff(meaning: str, signer_roles: list[str] | None = None) -> dict[str, Any]:
     """A signature block left deliberately unsigned — the harness never approves."""
     return {
         "meaning_of_signature": meaning,
-        "signer_roles": signer_roles,
+        "signer_roles": signer_roles if signer_roles is not None else list(CLINICAL_SIGNER_ROLES),
         "signatures": [],  # populated by a human signer, not the harness
         "approval_reference": "",
     }

@@ -14,6 +14,7 @@ from harness.packio.loader import load_pack
 from harness.qms.calibration_record import build_calibration_status
 from harness.qms.dossier import build_dossier
 from harness.qms.dossier_html import render_dossier_html
+from harness.qms.dossier_md import render_dossier_md
 from harness.qms.mappers import build_change_request, build_vv_plan, build_vv_report
 from harness.qms.package import build_package_manifest
 from harness.qms.render import (
@@ -167,9 +168,11 @@ def _cmd_dossier(args: argparse.Namespace) -> int:
     out_dir = store.runs_dir / args.run / "qms"
     out_dir.mkdir(parents=True, exist_ok=True)
     write_text(out_dir / "dossier.html", render_dossier_html(dossier))
+    write_text(out_dir / "dossier.md", render_dossier_md(dossier))
     write_text(out_dir / "dossier.json", json.dumps(dossier, indent=2, sort_keys=True))
     rec = dossier["vv_report"]["release_recommendation"]
     print(f"validation dossier for run {args.run}: recommendation={rec}")
+    print(f"  {out_dir / 'dossier.md'}    (renders on GitHub / in a Markdown viewer)")
     print(f"  {out_dir / 'dossier.html'}  (open in a browser; Cmd/Ctrl-P to print)")
     return 0
 
