@@ -25,30 +25,35 @@ class MissingReidKeyError(RuntimeError):
     """Raised when the re-identification key env var is not set."""
 
 
-def clinical_recognizers() -> list:
+def clinical_recognizers(language: str = "en") -> list:
     """Custom pattern recognizers for clinical / Swiss identifiers.
 
     Presidio's defaults are general and US-centric (they mis-tag an MRN as a bank
     or driver number). These add the domain identifiers that matter here. Recall
     for these types is exactly what the de-id recall harness measures.
+
+    These are pattern (regex) recognizers, so they are language-independent in
+    behaviour — but Presidio only runs a recognizer whose ``supported_language``
+    matches the analysis language, so it is bound to ``language`` here. The Swiss
+    context terms include German so context boosting works under ``de`` too.
     """
     from presidio_analyzer import Pattern, PatternRecognizer
 
     return [
         PatternRecognizer(
-            supported_entity="MEDICAL_RECORD_NUMBER",
-            context=["mrn", "medical record", "record number", "patient id"],
+            supported_entity="MEDICAL_RECORD_NUMBER", supported_language=language,
+            context=["mrn", "medical record", "record number", "patient id", "patientennummer"],
             patterns=[Pattern("mrn", r"\b(?:MRN|Medical Record(?: Number)?)[:#\s]*\d{5,10}\b", 0.7),
                       Pattern("mrn_bare", r"\bMRN[:#\s]*\d{5,10}\b", 0.6)],
         ),
         PatternRecognizer(
-            supported_entity="ACCESSION_NUMBER",
+            supported_entity="ACCESSION_NUMBER", supported_language=language,
             context=["accession", "specimen", "case number"],
             patterns=[Pattern("accession", r"\b(?:accession|specimen)[:#\s]*[A-Z]{1,3}[-\s]?\d{2}[-\s]?\d{3,6}\b", 0.7)],
         ),
         PatternRecognizer(
-            supported_entity="CH_AHV",  # Swiss social-security number
-            context=["ahv", "avs", "social security", "versicherten"],
+            supported_entity="CH_AHV", supported_language=language,  # Swiss social-security number
+            context=["ahv", "avs", "social security", "versicherten", "versichertennummer"],
             patterns=[Pattern("ch_ahv", r"\b756[.\s]?\d{4}[.\s]?\d{4}[.\s]?\d{2}\b", 0.9)],
         ),
     ]
@@ -75,7 +80,7 @@ class PresidioPseudonymizer(Pseudonymizer):
         }).create_engine()
         self._analyzer = AnalyzerEngine(nlp_engine=nlp, supported_languages=[language])
         if clinical:
-            for rec in clinical_recognizers():
+            for rec in clinical_recognizers(language):
                 self._analyzer.registry.add_recognizer(rec)
         self._anonymizer = AnonymizerEngine()
         self._deanonymizer = DeanonymizeEngine()

@@ -80,3 +80,28 @@ def test_clinical_recognizers_lift_ch_ahv_recall(monkeypatch):
     assert without["per_type_recall"]["CH_AHV"]["recall"] == 0.0
     # clinical signal survives either way
     assert with_clinical["utility_retention"] == 1.0
+
+
+# --- A3: multilingual (German only — do not claim FR/IT tested) ----------------
+
+def test_german_pseudonymization_person_and_ch_ahv(monkeypatch):
+    """German notes: spaCy PERSON + the (language-bound) CH_AHV recognizer.
+
+    Proves the language seam works for DE. FR/IT are NOT claimed — no model,
+    no test. The clinical pattern recognizers must be registered for the
+    analysis language or Presidio silently skips them (regression guard).
+    """
+    pytest.importorskip("presidio_analyzer")
+    from harness.ingest.presidio_backend import PresidioPseudonymizer
+    try:
+        p = PresidioPseudonymizer(model="de_core_news_sm", language="de", clinical=True)
+    except Exception as exc:
+        pytest.skip(f"German spaCy model unavailable: {exc}")
+    monkeypatch.setenv("HARNESS_REID_KEY", "0123456789abcdef")
+    res = p.pseudonymize(
+        "Versichertennummer 756.1234.5678.90; Patientin Erika Mustermann."
+    )
+    assert "CH_AHV" in res.entity_types            # language-bound recognizer fired
+    assert "PERSON" in res.entity_types            # German spaCy NER fired
+    assert "756.1234.5678.90" not in res.text
+    assert "Erika Mustermann" not in res.text
