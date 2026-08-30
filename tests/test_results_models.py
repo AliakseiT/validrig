@@ -2,7 +2,7 @@
 import pytest
 from pydantic import ValidationError
 
-from harness.models.results import (
+from validrig.models.results import (
     Generation,
     Grade,
     Pins,

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-from harness.models.pack import Case, CaseSchema, ElementSpec
-from harness.perturb.ablation import AblationTransformer
-from harness.perturb.base import get_transformer
+from validrig.models.pack import Case, CaseSchema, ElementSpec
+from validrig.perturb.ablation import AblationTransformer
+from validrig.perturb.base import get_transformer
 
 
 def _schema():

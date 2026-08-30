@@ -8,12 +8,12 @@ the PROCESS rubric on the same generation.
 
 from pathlib import Path
 
-from harness.agent.fake_agent import FakeAgent
-from harness.agent.mocks import MockStore, tool_args_hash
-from harness.execute import run_battery
-from harness.packio.loader import load_pack
-from harness.store.runstore import RunStore
-from harness.sut.base import SUTContext
+from validrig.agent.fake_agent import FakeAgent
+from validrig.agent.mocks import MockStore, tool_args_hash
+from validrig.execute import run_battery
+from validrig.packio.loader import load_pack
+from validrig.store.runstore import RunStore
+from validrig.sut.base import SUTContext
 
 PACK = Path(__file__).resolve().parent.parent / "packs" / "demo-agent"
 CLOCK = lambda: "2026-07-16T00:00:00+00:00"  # noqa: E731
@@ -80,9 +80,9 @@ def test_right_answer_wrong_process(tmp_path):
 
 def test_process_rubric_not_applicable_to_non_agent(tmp_path):
     # a trace-target rubric graded on a non-agent SUT is N/A, not a failure
-    from harness.judge.fake import FakeJudge
-    from harness.judge.grading import grade_generation
-    from harness.models.results import Generation, TokenUsage
+    from validrig.judge.fake import FakeJudge
+    from validrig.judge.grading import grade_generation
+    from validrig.models.results import Generation, TokenUsage
 
     pack = load_pack(PACK)
     case = pack.case("E001").model_copy(update={"elements": {"__document__": "EGFR"}})

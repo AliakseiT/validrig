@@ -3,11 +3,11 @@
 
 from pathlib import Path
 
-from harness.execute import run_battery
-from harness.packio.loader import load_pack
-from harness.qms.dossier import build_dossier
-from harness.qms.dossier_html import render_dossier_html
-from harness.store.runstore import RunStore
+from validrig.execute import run_battery
+from validrig.packio.loader import load_pack
+from validrig.qms.dossier import build_dossier
+from validrig.qms.dossier_html import render_dossier_html
+from validrig.store.runstore import RunStore
 
 PACK = Path(__file__).resolve().parent.parent / "packs" / "demo-tumor-board"
 CLOCK = lambda: "2026-07-16T00:00:00+00:00"  # noqa: E731
@@ -60,7 +60,7 @@ def test_dossier_html_status_is_label_backed_not_colour_alone(tmp_path):
 
 
 def test_dossier_cli_writes_html(tmp_path):
-    from harness.cli import main
+    from validrig.cli import main
     store = RunStore(tmp_path)
     pack = load_pack(PACK)
     res = run_battery(pack, "smoke", store, seed=1, now=CLOCK)[0]
@@ -78,7 +78,7 @@ def test_signer_roles_are_clinical_not_engineering(tmp_path):
 
 
 def test_dossier_markdown_renders_sections_and_is_github_friendly(tmp_path):
-    from harness.qms.dossier_md import render_dossier_md
+    from validrig.qms.dossier_md import render_dossier_md
     d, run = _dossier(tmp_path)
     md = render_dossier_md(d)
     assert md.startswith("# Validation Dossier")

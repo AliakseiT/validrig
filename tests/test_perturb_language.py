@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-from harness.models.pack import Case, CaseSchema, ElementSpec
-from harness.perturb.language import LanguageTransformer
+from validrig.models.pack import Case, CaseSchema, ElementSpec
+from validrig.perturb.language import LanguageTransformer
 
 
 def _schema():

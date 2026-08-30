@@ -8,7 +8,7 @@ that guarantee literal.
 
 from pathlib import Path
 
-ENGINE = Path(__file__).resolve().parent.parent / "harness"
+ENGINE = Path(__file__).resolve().parent.parent / "validrig"
 
 # Vocabulary that belongs only in packs (content), never in the engine.
 FORBIDDEN = ["tumor", "pathology_report", "molecular_report", "imaging_text", "adenocarcinoma"]

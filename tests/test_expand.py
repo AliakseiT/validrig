@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 from pathlib import Path
 
-import harness.perturb  # noqa: F401  (registers axes)
-from harness.packio.loader import load_pack
-from harness.perturb.expand import expand_battery
+import validrig.perturb  # noqa: F401  (registers axes)
+from validrig.packio.loader import load_pack
+from validrig.perturb.expand import expand_battery
 
 PACK = Path(__file__).resolve().parent.parent / "packs" / "demo-tumor-board"
 

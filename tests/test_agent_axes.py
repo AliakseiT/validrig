@@ -3,14 +3,14 @@
 
 from pathlib import Path
 
-from harness.agent.fake_agent import FakeAgent
-from harness.agent.mocks import MockStore, tool_args_hash
-from harness.execute import run_battery
-from harness.models.pack import Case, CaseSchema, ElementSpec
-from harness.packio.loader import load_pack
-from harness.perturb.tools import ToolAvailabilityTransformer, ToolResponseTransformer
-from harness.store.runstore import RunStore
-from harness.sut.base import SUTContext
+from validrig.agent.fake_agent import FakeAgent
+from validrig.agent.mocks import MockStore, tool_args_hash
+from validrig.execute import run_battery
+from validrig.models.pack import Case, CaseSchema, ElementSpec
+from validrig.packio.loader import load_pack
+from validrig.perturb.tools import ToolAvailabilityTransformer, ToolResponseTransformer
+from validrig.store.runstore import RunStore
+from validrig.sut.base import SUTContext
 
 PACK = Path(__file__).resolve().parent.parent / "packs" / "demo-agent"
 CLOCK = lambda: "2026-07-16T00:00:00+00:00"  # noqa: E731

@@ -7,12 +7,12 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from harness.authoring.adjudicate import adjudication_path
-from harness.calibration.store import CalibrationStore
-from harness.packio.loader import load_pack
-from harness.pathsafe import confined_path, is_safe_id, require_safe_id
-from harness.store.runstore import RunStore
-from harness.ui.app import create_app
+from validrig.authoring.adjudicate import adjudication_path
+from validrig.calibration.store import CalibrationStore
+from validrig.packio.loader import load_pack
+from validrig.pathsafe import confined_path, is_safe_id, require_safe_id
+from validrig.store.runstore import RunStore
+from validrig.ui.app import create_app
 
 PACK = Path(__file__).resolve().parent.parent / "packs" / "demo-tumor-board"
 

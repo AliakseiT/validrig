@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from harness.packio.loader import PackValidationError, load_pack
+from validrig.packio.loader import PackValidationError, load_pack
 
 PACK = Path(__file__).resolve().parent.parent / "packs" / "demo-tumor-board"
 

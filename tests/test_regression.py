@@ -9,10 +9,10 @@ granularity — not merely as an aggregate score drop.
 
 from pathlib import Path
 
-from harness.diff import diff_contracts, diff_runs
-from harness.execute import run_battery
-from harness.packio.loader import load_pack
-from harness.store.runstore import RunStore
+from validrig.diff import diff_contracts, diff_runs
+from validrig.execute import run_battery
+from validrig.packio.loader import load_pack
+from validrig.store.runstore import RunStore
 
 PACK = Path(__file__).resolve().parent.parent / "packs" / "demo-tumor-board"
 CLOCK = lambda: "2026-07-16T00:00:00+00:00"  # noqa: E731

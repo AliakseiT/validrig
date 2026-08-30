@@ -4,13 +4,13 @@
 import json
 from pathlib import Path
 
-from harness.execute import run_battery
-from harness.monitoring.drift import evaluate_drift
-from harness.monitoring.models import ProductionEvent
-from harness.monitoring.snapshot import build_snapshot
-from harness.packio.loader import load_pack
-from harness.qms.pms import build_aims_event, build_pms_report
-from harness.store.runstore import RunStore
+from validrig.execute import run_battery
+from validrig.monitoring.drift import evaluate_drift
+from validrig.monitoring.models import ProductionEvent
+from validrig.monitoring.snapshot import build_snapshot
+from validrig.packio.loader import load_pack
+from validrig.qms.pms import build_aims_event, build_pms_report
+from validrig.store.runstore import RunStore
 
 PACK = Path(__file__).resolve().parent.parent / "packs" / "demo-tumor-board"
 CLOCK = lambda: "2026-07-16T00:00:00+00:00"  # noqa: E731
@@ -67,7 +67,7 @@ def _write_events(path, n, n_over, period):
 
 
 def test_monitor_cli_end_to_end_raises_aims_on_degradation(tmp_path):
-    from harness.cli import main
+    from validrig.cli import main
 
     pack = load_pack(PACK)
     store = RunStore(tmp_path)

@@ -3,14 +3,14 @@
 
 import pytest
 
-from harness.ingest.pipeline import (
+from validrig.ingest.pipeline import (
     INGEST_GUARANTEE,
     IngestError,
     ingest_case,
     scrub_known,
 )
-from harness.ingest.pseudonymize import Pseudonymizer, PseudonymizationResult
-from harness.models.pack import CaseSchema, ElementSpec
+from validrig.ingest.pseudonymize import Pseudonymizer, PseudonymizationResult
+from validrig.models.pack import CaseSchema, ElementSpec
 
 
 class _Redactor(Pseudonymizer):
@@ -92,7 +92,7 @@ def test_guarantee_never_claims_no_phi():
 
 def test_cli_refuses_reid_out_inside_casebank(tmp_path):
     # The guard runs before any backend init, so this needs no [deid] stack.
-    from harness.cli import main
+    from validrig.cli import main
 
     raw = tmp_path / "raw"; raw.mkdir()
     (raw / "c.json").write_text('{"case_id":"c","elements":{"note":"x"}}')

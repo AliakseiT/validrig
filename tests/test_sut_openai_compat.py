@@ -3,8 +3,8 @@ import json
 
 import httpx
 
-from harness.models.sut import SUTBinding
-from harness.sut.openai_compat import OpenAICompatModel
+from validrig.models.sut import SUTBinding
+from validrig.sut.openai_compat import OpenAICompatModel
 
 
 def _mock_transport(captured):
@@ -63,7 +63,7 @@ def test_live_adapter_flagged_non_reproducible():
 
 def test_api_key_header_from_env(monkeypatch):
     import httpx as _httpx
-    from harness.models.sut import SUTBinding as _B
+    from validrig.models.sut import SUTBinding as _B
     monkeypatch.setenv("TEST_LLM_KEY", "secret-123")
     cap = {}
     binding = _B(model_id="m", model_version="1",
@@ -76,8 +76,8 @@ def test_api_key_header_from_env(monkeypatch):
 def test_missing_api_key_raises(monkeypatch):
     import httpx as _httpx
     import pytest
-    from harness.models.sut import SUTBinding as _B
-    from harness.sut.auth import MissingApiKeyError
+    from validrig.models.sut import SUTBinding as _B
+    from validrig.sut.auth import MissingApiKeyError
     monkeypatch.delenv("TEST_LLM_KEY", raising=False)
     binding = _B(model_id="m", model_version="1",
                  endpoint="https://x.invalid/v1/chat/completions", api_key_env="TEST_LLM_KEY")
@@ -87,7 +87,7 @@ def test_missing_api_key_raises(monkeypatch):
 
 
 def test_api_key_value_not_in_sut_hash(monkeypatch):
-    from harness.models.sut import SUTSpec as _S, SUTBinding as _B
+    from validrig.models.sut import SUTSpec as _S, SUTBinding as _B
     monkeypatch.setenv("TEST_LLM_KEY", "super-secret-value")
     spec = _S(id="s", kind="llm_call", binding=_B(
         model_id="m", model_version="1", endpoint="https://x/v1", api_key_env="TEST_LLM_KEY")).with_hash()
@@ -98,7 +98,7 @@ def test_api_key_value_not_in_sut_hash(monkeypatch):
 
 def test_retries_transient_then_succeeds():
     import httpx as _httpx
-    from harness.models.sut import SUTBinding as _B
+    from validrig.models.sut import SUTBinding as _B
     calls = {"n": 0}
 
     def handler(request):
@@ -118,7 +118,7 @@ def test_retries_transient_then_succeeds():
 def test_4xx_fails_fast_no_retry():
     import httpx as _httpx
     import pytest
-    from harness.models.sut import SUTBinding as _B
+    from validrig.models.sut import SUTBinding as _B
     calls = {"n": 0}
 
     def handler(request):

@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-from harness.models.pack import Case, RubricItem, Rubric
-from harness.models.results import Generation, TokenUsage
-from harness.judge.fake import FakeJudge
-from harness.judge.grading import build_judge, grade_generation
-from harness.models.pack import JudgeSpec
+from validrig.models.pack import Case, RubricItem, Rubric
+from validrig.models.results import Generation, TokenUsage
+from validrig.judge.fake import FakeJudge
+from validrig.judge.grading import build_judge, grade_generation
+from validrig.models.pack import JudgeSpec
 
 
 def _item():

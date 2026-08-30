@@ -1,12 +1,13 @@
-# The Harness Factory
+# validrig
 
-An evaluation **harness factory** for LLM-based clinical workflows. Hospitals run it
+**validrig** — the engine of **DearAuditor Eval** (CLI: `rig`). An evaluation
+**harness factory** for LLM-based clinical workflows. Hospitals run it
 on their own data, on-prem, to characterize, validate, and continuously monitor the
 empirical *input contract* of every `(model version, intended use, local population)`
 triple.
 
 Standing up a rigorous harness for a **new intended use** is a content-authoring
-exercise — a *pack* — not a software project. The engine (`harness/`) is
+exercise — a *pack* — not a software project. The engine (`validrig/`) is
 use-case-agnostic; everything use-case-specific lives in declarative, versioned
 packs (`packs/`).
 
@@ -22,7 +23,7 @@ packs (`packs/`).
   demo pack that runs end-to-end and reproducibly.
 - **M3 (core)** — **RegressionDiff**: diff two pinned runs at (case,
   perturbation, rubric-item), per-element contract, and aggregate granularity
-  with bootstrap significance. `harness diff` surfaces "what the new version
+  with bootstrap significance. `rig diff` surfaces "what the new version
   broke".
 - **M2 (slice)** — DE **language axis** and battery axis-scoping.
 
@@ -44,11 +45,11 @@ python3.12 -m venv .venv
 .venv/bin/pytest -q
 
 # characterize the input contract for the demo pack
-.venv/bin/harness run packs/demo-tumor-board --battery smoke --out ./runs --seed 1
+.venv/bin/rig run packs/demo-tumor-board --battery smoke --out ./runs --seed 1
 
 # compare a baseline model against a (deliberately regressed) new version
-.venv/bin/harness run packs/demo-tumor-board --battery regression --out ./runs --seed 1
-.venv/bin/harness diff --out ./runs --baseline <baseline_run_id> --candidate <candidate_run_id>
+.venv/bin/rig run packs/demo-tumor-board --battery regression --out ./runs --seed 1
+.venv/bin/rig diff --out ./runs --baseline <baseline_run_id> --candidate <candidate_run_id>
 ```
 
 ## License

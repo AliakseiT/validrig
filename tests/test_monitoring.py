@@ -4,9 +4,9 @@
 import pytest
 from pydantic import ValidationError
 
-from harness.monitoring.drift import evaluate_drift
-from harness.monitoring.models import ProductionEvent
-from harness.monitoring.snapshot import build_snapshot
+from validrig.monitoring.drift import evaluate_drift
+from validrig.monitoring.models import ProductionEvent
+from validrig.monitoring.snapshot import build_snapshot
 
 _CONTRACT = {
     "pins": {"pack_id": "p", "seed": 1},

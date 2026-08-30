@@ -3,8 +3,8 @@
 
 import pytest
 
-from harness.ingest.deid_eval import PhiItem, measure_deid, render_deid_md
-from harness.ingest.pseudonymize import Pseudonymizer, PseudonymizationResult
+from validrig.ingest.deid_eval import PhiItem, measure_deid, render_deid_md
+from validrig.ingest.pseudonymize import Pseudonymizer, PseudonymizationResult
 
 
 class _Redactor(Pseudonymizer):
@@ -61,7 +61,7 @@ def test_render_md_has_upper_bound_caveat():
 
 def _presidio(monkeypatch, clinical):
     pytest.importorskip("presidio_analyzer")
-    from harness.ingest.presidio_backend import PresidioPseudonymizer
+    from validrig.ingest.presidio_backend import PresidioPseudonymizer
     try:
         p = PresidioPseudonymizer(clinical=clinical)
     except Exception as exc:
@@ -92,7 +92,7 @@ def test_german_pseudonymization_person_and_ch_ahv(monkeypatch):
     analysis language or Presidio silently skips them (regression guard).
     """
     pytest.importorskip("presidio_analyzer")
-    from harness.ingest.presidio_backend import PresidioPseudonymizer
+    from validrig.ingest.presidio_backend import PresidioPseudonymizer
     try:
         p = PresidioPseudonymizer(model="de_core_news_sm", language="de", clinical=True)
     except Exception as exc:

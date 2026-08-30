@@ -1,25 +1,27 @@
-# Harness Factory — Build Status
+# validrig — Build Status
+
+_validrig is the engine of DearAuditor Eval (CLI: `rig`); formerly "Harness Factory"._
 
 _Last updated: 2026-07-16 (overnight autonomous build)_
 
 ## What runs today
 
-The engine (`harness/`) is use-case-agnostic; all use-case content lives in
+The engine (`validrig/`) is use-case-agnostic; all use-case content lives in
 `packs/`. Everything below runs fully offline and deterministically via a
 first-class **fake model** and **fake judge**.
 
 ```bash
 python3.12 -m venv .venv && .venv/bin/pip install -e ".[dev]"
 .venv/bin/pytest -q                                   # 169 tests, ~4s
-.venv/bin/harness new packs/my-pack --id my-pack      # scaffold a new pack
-.venv/bin/harness lint packs/demo-tumor-board         # check a pack for authoring gaps
-.venv/bin/harness run packs/demo-tumor-board --battery smoke --out ./runs --seed 1
-.venv/bin/harness run packs/demo-tumor-board --battery regression --out ./runs --seed 1
-.venv/bin/harness diff --out ./runs --baseline <run_a> --candidate <run_b>
-.venv/bin/harness qms packs/demo-tumor-board --run <run_id> --out ./runs
-.venv/bin/harness monitor packs/demo-tumor-board --run <run_id> --events events.jsonl --out ./runs  # M5 monitoring
-.venv/bin/harness dossier packs/demo-tumor-board --run <run_id> --out ./runs   # printable HTML validation dossier
-.venv/bin/harness ui packs/demo-tumor-board --out ./runs   # calibration review UI (needs [ui] extra)
+.venv/bin/rig new packs/my-pack --id my-pack      # scaffold a new pack
+.venv/bin/rig lint packs/demo-tumor-board         # check a pack for authoring gaps
+.venv/bin/rig run packs/demo-tumor-board --battery smoke --out ./runs --seed 1
+.venv/bin/rig run packs/demo-tumor-board --battery regression --out ./runs --seed 1
+.venv/bin/rig diff --out ./runs --baseline <run_a> --candidate <run_b>
+.venv/bin/rig qms packs/demo-tumor-board --run <run_id> --out ./runs
+.venv/bin/rig monitor packs/demo-tumor-board --run <run_id> --events events.jsonl --out ./runs  # M5 monitoring
+.venv/bin/rig dossier packs/demo-tumor-board --run <run_id> --out ./runs   # printable HTML validation dossier
+.venv/bin/rig ui packs/demo-tumor-board --out ./runs   # calibration review UI (needs [ui] extra)
 ```
 
 ## Milestone status
@@ -27,12 +29,12 @@ python3.12 -m venv .venv && .venv/bin/pip install -e ".[dev]"
 | Milestone | Status | Notes |
 |-----------|--------|-------|
 | **M1 engine core** | ✅ complete | pack loader, casebank, LLM-call SUT adapter (+ OpenAI-compatible, mock-tested), ablation+format axes, judge grading, append-only SQLite+parquet store, bootstrap stats, InputContract + ValidationReport, `demo-tumor-board` demo, end-to-end + determinism + zero-leak gates |
-| **M2 tumor-board tooling** | 🟡 authoring + ingest boundary | ✅ DE **language axis** + battery axis-scoping; **adjudication ingestion**; **`harness lint`**; **`harness new`** scaffold; and now the **pseudonymization boundary** (`harness/ingest/`, `[deid]` extra) — a `Pseudonymizer` contract + a **lightweight Presidio backend** (small spaCy model + regex patterns, no HF/transformers) with reversible `encrypt`/deanonymize (AES key from env, hospital-side, never stored). ❌ next (measured, if needed): higher-recall domain NER (OpenMed); **PDF/OCR ingestion**; judge-vs-gold metric. Lightweight recall on clinical free-text is not yet validated — established the boundary, not adequacy |
+| **M2 tumor-board tooling** | 🟡 authoring + ingest boundary | ✅ DE **language axis** + battery axis-scoping; **adjudication ingestion**; **`rig lint`**; **`rig new`** scaffold; and now the **pseudonymization boundary** (`validrig/ingest/`, `[deid]` extra) — a `Pseudonymizer` contract + a **lightweight Presidio backend** (small spaCy model + regex patterns, no HF/transformers) with reversible `encrypt`/deanonymize (AES key from env, hospital-side, never stored). ❌ next (measured, if needed): higher-recall domain NER (OpenMed); **PDF/OCR ingestion**; judge-vs-gold metric. Lightweight recall on clinical free-text is not yet validated — established the boundary, not adequacy |
 | **M3 regression discipline** | 🟢 done (core) | ✅ battery pinning, **RegressionDiff**, acceptance gating, CLI `diff`, native **G-Eval `LLMJudge`** (Gap 1), and now the **judge-calibration loop** (Gap 2): deterministic sampling, append-only human grades, Cohen's κ + % agreement, and a standalone **calibration gate** (advisory when underpowered). Surfaced in the review UI. Gate is kept out of the synchronous run/report path by design (calibration is asynchronous) |
 | **Review UI (M2/M3)** | 🟢 both jobs | ✅ FastAPI + Jinja2, behind the `[ui]` extra, localhost-bound, never mutates immutable grades. **Calibration**: grade sampled generations, agreement/κ + gate. **Adjudication**: blind per-case gold authoring, writes pack `rubric/adjudication/*.json` (now consumed by the loader). Data path tested via TestClient + live uvicorn smoke. ❌ deferred: clinical UX review, multi-rater, SSO |
 | **M4 agent SUTs** | 🟢 done | ✅ deterministic **tool mocks** (keyed by case/tool/args-hash, pack content → pack_hash), a **fake agent** (kind=`agent`) emitting a `Trace`, **process rubrics** (`RubricItem.target=trace`, N/A for non-agent SUTs), proven by **right-answer-wrong-process**. Plus the **agent perturbation axes**: `tool_availability` (remove a tool) and `tool_response` (error/empty) threaded to the agent via `SUTContext`; the `agent_robustness` battery shows the tool removed/degraded → **process fails while output survives** (agent compensates from the note, doesn't hallucinate). ❌ remaining: wrapping a real (non-fake) agent framework via the trace protocol |
-| **M5 monitoring** | 🟢 done (core) | ✅ ingest pseudonymized production events (element-presence booleans + override flag, `extra="forbid"`), **MonitoringSnapshot** (override rate + three-state completeness vs the validated contract), and **drift** on two separate baselines — absolute (vs thresholds) and trend (vs prior snapshot), degradation-only, advisory when underpowered. `harness monitor` emits snapshot + drift + PMS + AIMS. ❌ deferred: production-side capture/pseudonymization of real encounters (hospital integration, not offline-verifiable) |
-| **QMS integration (§6)** | 🟢 complete | ✅ maps runs → **r05** (`QMS-2026-07-09-R005`): V&V plan, V&V report (baseline verdict; perturbations as characterization; calibration gate folded in async), change request, **calibration status**, **package manifest**, and now **PMS periodic report** (from a snapshot) + **AIMS event** (only on a real drift finding), plus a **consolidated validation dossier** rendered as self-contained **printable HTML** (`harness dossier`) with info-value bars + label-backed status (grayscale-safe). Attestation over pinned inputs; unsigned drafts; a prepared seam for immutable-release signing (`docs/proposals/2026-07-17-release-attestation.md`). Traceability map in `docs/qms-traceability.md` |
+| **M5 monitoring** | 🟢 done (core) | ✅ ingest pseudonymized production events (element-presence booleans + override flag, `extra="forbid"`), **MonitoringSnapshot** (override rate + three-state completeness vs the validated contract), and **drift** on two separate baselines — absolute (vs thresholds) and trend (vs prior snapshot), degradation-only, advisory when underpowered. `rig monitor` emits snapshot + drift + PMS + AIMS. ❌ deferred: production-side capture/pseudonymization of real encounters (hospital integration, not offline-verifiable) |
+| **QMS integration (§6)** | 🟢 complete | ✅ maps runs → **r05** (`QMS-2026-07-09-R005`): V&V plan, V&V report (baseline verdict; perturbations as characterization; calibration gate folded in async), change request, **calibration status**, **package manifest**, and now **PMS periodic report** (from a snapshot) + **AIMS event** (only on a real drift finding), plus a **consolidated validation dossier** rendered as self-contained **printable HTML** (`rig dossier`) with info-value bars + label-backed status (grayscale-safe). Attestation over pinned inputs; unsigned drafts; a prepared seam for immutable-release signing (`docs/proposals/2026-07-17-release-attestation.md`). Traceability map in `docs/qms-traceability.md` |
 
 ## Proposals
 
@@ -84,7 +86,7 @@ python3.12 -m venv .venv && .venv/bin/pip install -e ".[dev]"
 ## Where the code is
 
 - Plan: `docs/superpowers/plans/2026-07-16-harness-factory-m1.md`
-- Engine: `harness/` — `models/`, `packio/`, `perturb/`, `sut/`, `judge/`,
+- Engine: `validrig/` — `models/`, `packio/`, `perturb/`, `sut/`, `judge/`,
   `store/`, `stats/`, `artifacts/`, `calibration/`, `agent/`, `monitoring/`,
   `qms/`, `authoring/`, `ui/`, `execute.py`, `diff.py`, `cli.py`, `power.py`,
   `pathsafe.py`

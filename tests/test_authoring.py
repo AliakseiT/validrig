@@ -4,11 +4,11 @@
 import shutil
 from pathlib import Path
 
-from harness.authoring.lint import lint_pack, has_errors
-from harness.authoring.scaffold import scaffold_pack
-from harness.execute import run_battery
-from harness.packio.loader import load_pack
-from harness.store.runstore import RunStore
+from validrig.authoring.lint import lint_pack, has_errors
+from validrig.authoring.scaffold import scaffold_pack
+from validrig.execute import run_battery
+from validrig.packio.loader import load_pack
+from validrig.store.runstore import RunStore
 
 PACK = Path(__file__).resolve().parent.parent / "packs" / "demo-tumor-board"
 
@@ -21,7 +21,7 @@ def test_clean_pack_lints_without_errors():
 def test_blank_grading_instructions_flagged():
     # construct a rubric item with blank grading instructions directly
     pack = load_pack(PACK)
-    from harness.models.pack import RubricItem, Rubric
+    from validrig.models.pack import RubricItem, Rubric
 
     broken_item = RubricItem(
         id="item_broken", statement="a statement", type="binary",

@@ -2,14 +2,14 @@
 import json
 from pathlib import Path
 
-from harness.artifacts.contract import extract_contract
-from harness.artifacts.report import (
+from validrig.artifacts.contract import extract_contract
+from validrig.artifacts.report import (
     build_validation_report,
     evaluate_acceptance,
     render_report_json,
 )
-from harness.models.pack import AcceptanceSpec, CaseSchema, ElementSpec
-from harness.models.results import Pins, RunMeta
+from validrig.models.pack import AcceptanceSpec, CaseSchema, ElementSpec
+from validrig.models.results import Pins, RunMeta
 
 
 def _pins():

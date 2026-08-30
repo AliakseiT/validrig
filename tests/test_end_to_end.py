@@ -3,9 +3,9 @@
 
 from pathlib import Path
 
-from harness.execute import run_battery
-from harness.packio.loader import load_pack
-from harness.store.runstore import RunStore
+from validrig.execute import run_battery
+from validrig.packio.loader import load_pack
+from validrig.store.runstore import RunStore
 
 PACK = Path(__file__).resolve().parent.parent / "packs" / "demo-tumor-board"
 

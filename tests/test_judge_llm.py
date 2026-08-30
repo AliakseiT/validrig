@@ -7,9 +7,9 @@ from pathlib import Path
 
 import httpx
 
-from harness.judge.llm import GradingConfig, LLMJudge
-from harness.models.pack import RubricItem
-from harness.models.sut import SUTBinding
+from validrig.judge.llm import GradingConfig, LLMJudge
+from validrig.models.pack import RubricItem
+from validrig.models.sut import SUTBinding
 
 PACK = Path(__file__).resolve().parent.parent / "packs" / "demo-tumor-board"
 
@@ -119,9 +119,9 @@ def test_reference_free_by_default_but_optin_includes_reference():
 def test_judge_called_once_then_replayed_from_store(tmp_path):
     """The LLM judge is invoked once during the run; analysis and re-reads use
     the recorded grades and never re-invoke it (record-once / replay)."""
-    from harness.execute import run_battery
-    from harness.packio.loader import load_pack
-    from harness.store.runstore import RunStore
+    from validrig.execute import run_battery
+    from validrig.packio.loader import load_pack
+    from validrig.store.runstore import RunStore
 
     counter = {"n": 0}
     judge = _judge_returning('{"score": 1, "reasoning": "ok"}', counter=counter)
@@ -147,8 +147,8 @@ def test_judge_called_once_then_replayed_from_store(tmp_path):
 def test_judge_change_is_a_revalidation_event(tmp_path):
     """Changing the judge config changes pack_hash -> run_id, with no extra
     machinery — proving a judge upgrade is a diffable revalidation event."""
-    from harness.models.results import Pins, run_id_for
-    from harness.packio.loader import load_pack
+    from validrig.models.results import Pins, run_id_for
+    from validrig.packio.loader import load_pack
 
     dst = tmp_path / "pack"
     shutil.copytree(PACK, dst)

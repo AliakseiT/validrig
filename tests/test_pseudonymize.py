@@ -7,7 +7,7 @@ installed, so the core suite stays dependency-light.
 
 import pytest
 
-from harness.ingest.pseudonymize import PseudonymizationResult, residual_identifiers
+from validrig.ingest.pseudonymize import PseudonymizationResult, residual_identifiers
 
 
 def test_residual_identifiers_boundary_check():
@@ -24,7 +24,7 @@ def test_result_defaults_are_one_way():
 def _backend(monkeypatch):
     pytest.importorskip("presidio_analyzer")
     pytest.importorskip("presidio_anonymizer")
-    from harness.ingest.presidio_backend import PresidioPseudonymizer
+    from validrig.ingest.presidio_backend import PresidioPseudonymizer
     try:
         p = PresidioPseudonymizer()
     except Exception as exc:  # spaCy model not installed in this env
@@ -54,7 +54,7 @@ def test_presidio_reversible_round_trip(monkeypatch):
 
 def test_presidio_missing_key_raises(monkeypatch):
     pytest.importorskip("presidio_analyzer")
-    from harness.ingest.presidio_backend import MissingReidKeyError, PresidioPseudonymizer
+    from validrig.ingest.presidio_backend import MissingReidKeyError, PresidioPseudonymizer
     try:
         p = PresidioPseudonymizer()
     except Exception as exc:

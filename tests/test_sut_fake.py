@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-from harness.models.sut import SUTBinding, SUTSpec
-from harness.sut.fake import FakeModel
-from harness.sut.registry import build_adapter
+from validrig.models.sut import SUTBinding, SUTSpec
+from validrig.sut.fake import FakeModel
+from validrig.sut.registry import build_adapter
 
 
 def _fake():

@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-from harness.calibration.agreement import cohen_kappa, compute_agreement
-from harness.calibration.gate import evaluate_gate
-from harness.calibration.models import HumanGrade
-from harness.calibration.sample import select_calibration_sample
-from harness.calibration.store import CalibrationStore
-from harness.models.results import Grade
+from validrig.calibration.agreement import cohen_kappa, compute_agreement
+from validrig.calibration.gate import evaluate_gate
+from validrig.calibration.models import HumanGrade
+from validrig.calibration.sample import select_calibration_sample
+from validrig.calibration.store import CalibrationStore
+from validrig.models.results import Grade
 
 
 def _keys(n):

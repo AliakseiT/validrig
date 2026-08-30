@@ -9,13 +9,13 @@ characterization section.
 
 from pathlib import Path
 
-from harness.diff import diff_runs
-from harness.execute import run_battery
-from harness.hashing import content_hash
-from harness.packio.loader import load_pack
-from harness.qms.mappers import build_change_request, build_vv_plan, build_vv_report
-from harness.qms.render import render_change_request_md, render_vv_report_md
-from harness.store.runstore import RunStore
+from validrig.diff import diff_runs
+from validrig.execute import run_battery
+from validrig.hashing import content_hash
+from validrig.packio.loader import load_pack
+from validrig.qms.mappers import build_change_request, build_vv_plan, build_vv_report
+from validrig.qms.render import render_change_request_md, render_vv_report_md
+from validrig.store.runstore import RunStore
 
 PACK = Path(__file__).resolve().parent.parent / "packs" / "demo-tumor-board"
 CLOCK = lambda: "2026-07-16T00:00:00+00:00"  # noqa: E731

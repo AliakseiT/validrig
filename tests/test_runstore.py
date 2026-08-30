@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 import pytest
 
-from harness.models.results import (
+from validrig.models.results import (
     Generation,
     Grade,
     Pins,
@@ -10,7 +10,7 @@ from harness.models.results import (
     TokenUsage,
     run_id_for,
 )
-from harness.store.runstore import RunStore
+from validrig.store.runstore import RunStore
 
 
 def _run():

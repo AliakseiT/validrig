@@ -6,10 +6,10 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from harness.calibration.store import CalibrationStore
-from harness.packio.loader import load_pack
-from harness.store.runstore import RunStore
-from harness.ui.app import create_app
+from validrig.calibration.store import CalibrationStore
+from validrig.packio.loader import load_pack
+from validrig.store.runstore import RunStore
+from validrig.ui.app import create_app
 
 PACK = Path(__file__).resolve().parent.parent / "packs" / "demo-tumor-board"
 CLOCK = lambda: "2026-07-16T00:00:00+00:00"  # noqa: E731

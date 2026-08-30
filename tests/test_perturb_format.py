@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-from harness.models.pack import Case, CaseSchema, ElementSpec
-from harness.perturb.format import DOCUMENT_KEY, FormatTransformer
+from validrig.models.pack import Case, CaseSchema, ElementSpec
+from validrig.perturb.format import DOCUMENT_KEY, FormatTransformer
 
 
 def _schema():

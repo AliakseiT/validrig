@@ -3,15 +3,15 @@
 
 from pathlib import Path
 
-from harness.calibration.models import HumanGrade
-from harness.calibration.store import CalibrationStore
-from harness.execute import run_battery
-from harness.hashing import content_hash
-from harness.packio.loader import load_pack
-from harness.qms.calibration_record import build_calibration_status
-from harness.qms.mappers import build_vv_report
-from harness.qms.package import build_package_manifest
-from harness.store.runstore import RunStore
+from validrig.calibration.models import HumanGrade
+from validrig.calibration.store import CalibrationStore
+from validrig.execute import run_battery
+from validrig.hashing import content_hash
+from validrig.packio.loader import load_pack
+from validrig.qms.calibration_record import build_calibration_status
+from validrig.qms.mappers import build_vv_report
+from validrig.qms.package import build_package_manifest
+from validrig.store.runstore import RunStore
 
 PACK = Path(__file__).resolve().parent.parent / "packs" / "demo-tumor-board"
 CLOCK = lambda: "2026-07-16T00:00:00+00:00"  # noqa: E731
@@ -80,7 +80,7 @@ def test_package_manifest_ties_documents_to_pins(tmp_path):
 
 
 def test_qms_cli_emits_calibration_status_when_grades_exist(tmp_path):
-    from harness.cli import main
+    from validrig.cli import main
 
     pack, store, res = _run(tmp_path)
     # append a human grade so calibration data exists

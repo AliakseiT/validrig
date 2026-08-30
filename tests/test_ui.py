@@ -10,11 +10,11 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from harness.calibration.store import CalibrationStore
-from harness.execute import run_battery
-from harness.packio.loader import load_pack
-from harness.store.runstore import RunStore
-from harness.ui.app import create_app
+from validrig.calibration.store import CalibrationStore
+from validrig.execute import run_battery
+from validrig.packio.loader import load_pack
+from validrig.store.runstore import RunStore
+from validrig.ui.app import create_app
 
 PACK = Path(__file__).resolve().parent.parent / "packs" / "demo-tumor-board"
 CLOCK = lambda: "2026-07-16T00:00:00+00:00"  # noqa: E731
@@ -92,7 +92,7 @@ def test_loop_closes_gate_blocks_when_human_disagrees(tmp_path):
 
 def test_never_binds_all_interfaces_by_default():
     # the CLI default host must be localhost, not 0.0.0.0 (PHI on a hospital LAN)
-    from harness.cli import build_parser
+    from validrig.cli import build_parser
 
     args = build_parser().parse_args(["ui", "packs/demo-tumor-board"])
     assert args.host == "127.0.0.1"

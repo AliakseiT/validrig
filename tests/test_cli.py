@@ -18,7 +18,7 @@ PACK = REPO / "packs" / "demo-tumor-board"
 
 def _run_cli(args, cwd):
     return subprocess.run(
-        [sys.executable, "-m", "harness.cli", *args],
+        [sys.executable, "-m", "validrig.cli", *args],
         cwd=cwd,
         capture_output=True,
         text=True,

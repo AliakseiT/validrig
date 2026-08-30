@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-from harness.stats.bootstrap import bootstrap_ci
-from harness.stats.analyze import (
+from validrig.stats.bootstrap import bootstrap_ci
+from validrig.stats.analyze import (
     GradedRecord,
     critical_rates,
     information_value,

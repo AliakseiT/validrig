@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-from harness.hashing import canonical_json, content_hash
-from harness.envhash import env_hash
+from validrig.hashing import canonical_json, content_hash
+from validrig.envhash import env_hash
 
 
 def test_content_hash_key_order_invariant():
