@@ -22,6 +22,7 @@ python3.12 -m venv .venv && .venv/bin/pip install -e ".[dev]"
 .venv/bin/rig monitor packs/demo-tumor-board --run <run_id> --events events.jsonl --out ./runs  # M5 monitoring
 .venv/bin/rig dossier packs/demo-tumor-board --run <run_id> --out ./runs   # printable HTML validation dossier
 .venv/bin/rig ui packs/demo-tumor-board --out ./runs   # calibration review UI (needs [ui] extra)
+.venv/bin/rig publish packs/demo-tumor-board --runs ./runs --run <run_id> --format ts --out content.ts  # site-ready content from pinned runs (see README)
 ```
 
 ## Milestone status

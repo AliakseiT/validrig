@@ -354,6 +354,56 @@ def _cmd_monitor(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_publish(args: argparse.Namespace) -> int:
+    from datetime import datetime, timezone
+
+    from validrig.publish import (
+        build_pipeline_content,
+        emit_json,
+        emit_ts,
+        load_publish_spec,
+    )
+
+    pack = load_pack(args.pack)
+    store = RunStore(args.runs)
+    spec_path = Path(args.spec) if args.spec else Path(args.pack) / "publish.yaml"
+    spec = load_publish_spec(spec_path)
+
+    content, meta = build_pipeline_content(
+        pack, store, args.run, spec, spec_path.parent,
+        slug=args.slug, title=args.title, allow_pack_drift=args.allow_pack_drift,
+    )
+    generated_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    if args.format == "ts":
+        rendered = emit_ts(content, meta, generated_at, types_module=args.types_module)
+    else:
+        rendered = emit_json(content)
+
+    if args.out:
+        out = Path(args.out)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(rendered, encoding="utf-8")
+        dest = str(out)
+    else:
+        sys.stdout.write(rendered)
+        dest = "<stdout>"
+
+    print(
+        f"published {args.template} content '{content['slug']}' "
+        f"({args.format}) -> {dest}",
+        file=sys.stderr,
+    )
+    print(
+        f"  pack {meta['pack_id']} v{meta['pack_version']} "
+        f"pack_hash={meta['pack_hash'][:16]}",
+        file=sys.stderr,
+    )
+    for r in meta["run_ids"]:
+        marker = " (dossier run)" if r == meta["run_ids"][0] else ""
+        print(f"  run {r} sut={meta['run_suts'][r]}{marker}", file=sys.stderr)
+    return 0
+
+
 def _cmd_ui(args: argparse.Namespace) -> int:
     try:
         import uvicorn
@@ -438,6 +488,34 @@ def build_parser() -> argparse.ArgumentParser:
     new.add_argument("dest", type=Path, help="destination directory for the new pack")
     new.add_argument("--id", default=None, help="pack id (defaults to the directory name)")
     new.set_defaults(func=_cmd_new)
+
+    publish = sub.add_parser(
+        "publish",
+        help="emit site-ready content from pinned runs (authored prose from the "
+             "pack's publish.yaml + machine facts from run artifacts)",
+    )
+    publish.add_argument("pack", type=Path, help="path to the pack directory")
+    publish.add_argument("--runs", type=Path, default=Path("./runs"),
+                         help="run store root holding the pinned runs")
+    publish.add_argument("--run", action="append", required=True, metavar="RUN_ID",
+                         help="pinned run id to publish from (repeatable; the first "
+                              "one supplies the embedded dossier)")
+    publish.add_argument("--template", choices=["pipeline"], default="pipeline",
+                         help="content shape to emit (only 'pipeline' for now)")
+    publish.add_argument("--format", choices=["ts", "json"], default="ts",
+                         help="output format: TypeScript module or JSON object")
+    publish.add_argument("--out", type=Path, default=None,
+                         help="output file (default: stdout)")
+    publish.add_argument("--spec", type=Path, default=None,
+                         help="publish spec path (default: <pack>/publish.yaml)")
+    publish.add_argument("--slug", default=None, help="override the spec's slug")
+    publish.add_argument("--title", default=None, help="override the spec's title")
+    publish.add_argument("--types-module", default="./types", dest="types_module",
+                         help="module the TS type is imported from (default ./types)")
+    publish.add_argument("--allow-pack-drift", action="store_true",
+                         help="publish even when the pack directory no longer hashes "
+                              "to the runs' pinned pack_hash")
+    publish.set_defaults(func=_cmd_publish)
 
     ui = sub.add_parser("ui", help="launch the calibration review UI (needs the 'ui' extra)")
     ui.add_argument("pack", type=Path, help="path to the pack directory")

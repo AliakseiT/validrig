@@ -52,6 +52,42 @@ python3.12 -m venv .venv
 .venv/bin/rig diff --out ./runs --baseline <baseline_run_id> --candidate <candidate_run_id>
 ```
 
+## Publishing pinned evidence (`rig publish`)
+
+`rig publish` turns a pack plus pinned runs into a site-ready content object —
+authored plain-language prose merged with machine-derived numbers, and the real
+validation dossier embedded as an HTML fragment:
+
+```bash
+.venv/bin/rig publish <pack-dir> \
+  --runs ./runs \                      # run store root
+  --run <dossier_run_id> --run <id2> \ # pinned runs (first supplies the dossier)
+  --template pipeline \                # content shape (only 'pipeline' for now)
+  --format ts \                        # ts (typed data module) or json
+  --out site/src/pipelines/<slug>.ts
+```
+
+Split of responsibilities:
+
+- **Authored prose** lives in a per-pack `publish.yaml` (default
+  `<pack>/publish.yaml`, override with `--spec`): slug, title, summary, data
+  provenance note, and the narrative arc (`task`, `risks`, `measurement`,
+  `findings`, `meaning`) as HTML fragments. `--slug`/`--title` override the
+  spec. The pack loader ignores `publish.yaml`, so authoring it never changes
+  the pack hash or invalidates pinned runs (adding publish fields to the
+  manifest would — that is why it is a separate file).
+- **Machine numbers** are never hand-typed: prose references them as
+  `{{fact|format-spec}}` placeholders resolved from run artifacts — e.g.
+  `{{run.<id>.element.<name>.information_value|.3f}}`,
+  `{{run.<id>.acceptance.<metric>.value}}`, `{{diff.<key>.delta|+.2f}}`
+  (regression diffs recomputed from grades, declared under `diffs:` in the
+  spec), and `{{file.<key>.<path>}}` for committed evidence JSON files declared
+  under `fact_files:`. An unknown or unmeasured fact is a hard error.
+- **The dossier** section embeds the first `--run`'s real dossier (rendered as
+  an embeddable fragment) with its run hash and engine version. Publishing is
+  refused when the pack directory no longer hashes to the runs' pinned
+  `pack_hash` (override consciously with `--allow-pack-drift`).
+
 ## License
 
 AGPL-3.0-or-later. See `LICENSE`.
