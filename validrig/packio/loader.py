@@ -71,7 +71,12 @@ def load_pack(path: str | Path) -> Pack:
         suts_doc = _read_yaml(root / "suts.yaml") or {}
         suts = [SUTSpec(**s).with_hash() for s in suts_doc.get("suts", [])]
 
-        judge = JudgeSpec(**_read_yaml(root / "judge.yaml"))
+        # judge.yaml declares the default judge inline, plus any further judges a
+        # battery may select under `alternates:`.
+        judge_doc = dict(_read_yaml(root / "judge.yaml") or {})
+        alternates_doc = judge_doc.pop("alternates", None) or []
+        judge = JudgeSpec(**judge_doc)
+        alternate_judges = [JudgeSpec(**a) for a in alternates_doc]
         acceptance = AcceptanceSpec(**(_read_yaml(root / "acceptance.yaml") or {}))
 
         monitoring_doc = _read_yaml(root / "monitoring.yaml") if (root / "monitoring.yaml").exists() else {}
@@ -104,6 +109,19 @@ def load_pack(path: str | Path) -> Pack:
                     f"rubric item '{item_id}'"
                 )
 
+    # A judge id must resolve to exactly one declared judge, and a battery may
+    # only name one that exists — otherwise a run would pin a judge id that does
+    # not describe what graded it.
+    judge_ids = [judge.id] + [j.id for j in alternate_judges]
+    duplicates = sorted({jid for jid in judge_ids if judge_ids.count(jid) > 1})
+    if duplicates:
+        raise PackValidationError(f"judge.yaml declares duplicate judge id(s): {duplicates}")
+    for battery in batteries:
+        if battery.judge is not None and battery.judge not in judge_ids:
+            raise PackValidationError(
+                f"battery '{battery.id}' references unknown judge '{battery.judge}'"
+            )
+
     pack = Pack(
         manifest=manifest,
         case_schema=case_schema,
@@ -113,6 +131,7 @@ def load_pack(path: str | Path) -> Pack:
         batteries=batteries,
         suts=suts,
         judge=judge,
+        alternate_judges=alternate_judges,
         acceptance=acceptance,
         monitoring=monitoring,
         adjudications=adjudications,

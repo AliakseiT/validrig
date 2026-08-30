@@ -101,12 +101,20 @@ def run_battery(
     clock = now or _utc_now
 
     units = expand_battery(pack, battery)
+    # The judge is declared by the pack — the battery's own judge if it names one,
+    # else the pack default — and the same spec supplies both the grader and the
+    # pinned judge_id below, so the pins name what actually graded.
+    #
     # The judge is called exactly once per generation here; grades are recorded to
     # the store and all downstream analysis/replay reads recorded grades. A live
     # LLM judge (reproducible=False) is therefore never re-invoked on replay,
-    # keeping the determinism/regression guarantees intact. An injected judge
-    # (e.g. for offline tests of the LLM path) overrides the pack default.
-    judge = judge or build_judge(pack.judge)
+    # keeping the determinism/regression guarantees intact.
+    #
+    # `judge=` is a test seam only (offline exercise of the LLM path): it does NOT
+    # change the pins, so an injected judge that differs from the declared one
+    # produces a run whose pins misdescribe it. Never inject in production.
+    judge_spec = pack.judge_for(battery_id)
+    judge = judge or build_judge(judge_spec)
     critical_items = tuple(i.id for i in pack.rubric.items if i.critical)
 
     results: list[RunResult] = []
@@ -163,8 +171,8 @@ def run_battery(
             battery_version=battery.version,
             sut_id=sut_spec.id,
             sut_hash=sut_spec.sut_hash,
-            judge_id=pack.judge.id,
-            judge_version=pack.judge.version,
+            judge_id=judge_spec.id,
+            judge_version=judge_spec.version,
             seed=seed,
             engine_version=ENGINE_VERSION,
         )

@@ -52,6 +52,34 @@ python3.12 -m venv .venv
 .venv/bin/rig diff --out ./runs --baseline <baseline_run_id> --candidate <candidate_run_id>
 ```
 
+## Declaring the judge (`judge.yaml`)
+
+`judge.yaml` declares the pack's default judge inline. Further judges go under
+`alternates:`, and a battery picks one by id:
+
+```yaml
+# judge.yaml — the deployed judge, plus an offline one
+id: geval-judge
+version: "1"
+kind: openai_compat
+binding: { model_id: ..., endpoint: ..., api_key_env: JUDGE_API_KEY }
+alternates:
+  - { id: fake-judge, version: "1", kind: fake, binding: {} }
+```
+```yaml
+# battery.yaml — the offline smoke battery grades with the offline judge
+- id: smoke
+  judge: fake-judge
+  ...
+```
+
+A run pins the judge its battery declares, so an offline battery stays offline
+*and* pins the offline judge, while paid batteries pin the hosted one. Judge
+selection is pack content: changing it moves `pack_hash` → `run_id`, which makes
+a judge swap a revalidation event by construction. Never substitute a judge from
+a run script — the pins come from the pack, so a substituted judge makes them
+lie. Secrets are referenced by environment-variable **name** only.
+
 ## Publishing pinned evidence (`rig publish`)
 
 `rig publish` turns a pack plus pinned runs into a site-ready content object —

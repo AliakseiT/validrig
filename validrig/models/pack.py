@@ -121,6 +121,12 @@ class BatterySpec(_Frozen):
     axes: Union[list[str], Literal["all"]] = "all"
     suts: list[str]
     n_samples: int = 1
+    # Which declared judge grades this battery: a judge id from judge.yaml (the
+    # default judge or one of its ``alternates``). ``None`` means the pack's
+    # default judge. Selection is content, so it flows into pack_hash, and the
+    # run pins the judge that actually graded — an offline battery graded by a
+    # deterministic judge never pins the deployed LLM judge, or vice versa.
+    judge: str | None = None
 
 
 class JudgeSpec(_Frozen):
@@ -160,6 +166,11 @@ class Pack(_Frozen):
     batteries: list[BatterySpec]
     suts: list[SUTSpec]
     judge: JudgeSpec
+    # Further judges the pack declares (judge.yaml ``alternates:``), selectable
+    # per battery. A pack that grades paid batteries with a hosted LLM judge and
+    # its offline battery with a deterministic one declares both here, rather
+    # than having a run script substitute a judge the pins cannot see.
+    alternate_judges: list[JudgeSpec] = Field(default_factory=list)
     acceptance: AcceptanceSpec
     # Post-market monitoring thresholds (distinct namespace from acceptance):
     # override_rate_max, input_completeness_min, override_trend_delta_max.
@@ -174,6 +185,20 @@ class Pack(_Frozen):
             if a.case_id == case_id:
                 return a
         return None
+
+    def judge_for(self, battery_id: str) -> JudgeSpec:
+        """The judge a battery is graded by — its declared one, else the default.
+
+        Resolving this from pack content (never from a caller) is what keeps a
+        run's pinned ``judge_id`` truthful.
+        """
+        battery = self.battery(battery_id)
+        if battery is None or battery.judge is None or battery.judge == self.judge.id:
+            return self.judge
+        for spec in self.alternate_judges:
+            if spec.id == battery.judge:
+                return spec
+        raise KeyError(f"battery '{battery_id}' names unknown judge '{battery.judge}'")
 
     def battery(self, battery_id: str) -> BatterySpec | None:
         for b in self.batteries:

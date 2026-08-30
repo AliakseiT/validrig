@@ -12,6 +12,9 @@ calibration_fraction: 0.1
 # once and replayed; a change to any field below changes pack_hash -> run_id, so
 # a judge upgrade is automatically a revalidation event. No extra dependencies.
 #
+# The judge declared here is the judge a run PINS. Never substitute one in a
+# script: the pins would name this judge while another one graded.
+#
 # id: geval-judge
 # version: "1"
 # kind: openai_compat
@@ -19,6 +22,7 @@ calibration_fraction: 0.1
 #   model_id: "your-judge-model"
 #   model_version: "2026-01"          # author-asserted; pin a local model for real reproducibility
 #   endpoint: "http://localhost:8000/v1/chat/completions"
+#   api_key_env: JUDGE_API_KEY        # env var NAME only — never a key value
 #   params: { max_tokens: 512 }
 # grading:
 #   include_document: true            # judge sees the source, to check grounding
@@ -28,3 +32,13 @@ calibration_fraction: 0.1
 #       - "Identify any histological diagnosis stated in the output."
 #       - "Judge whether it is supported by the source pathology text."
 # calibration_fraction: 0.1
+#
+# # Further judges this pack declares. A battery selects one by id in
+# # battery.yaml (`judge: fake-judge`); batteries that name none use the default
+# # above. This is how an offline battery stays offline (and pins the offline
+# # judge) while paid batteries pin the hosted one.
+# alternates:
+#   - id: fake-judge
+#     version: "1"
+#     kind: fake
+#     binding: {}
