@@ -194,24 +194,44 @@ def create_app(
             {"case_id": c.case_id, "adjudicated": c.case_id in done}
             for c in sorted(pack.cases, key=lambda c: c.case_id)
         ]
+        total = len(rows)
+        completed = sum(1 for r in rows if r["adjudicated"])
         return _TEMPLATES.TemplateResponse(
             request,
             "adjudicate_list.html",
-            {"rows": rows, "writable": pack_dir is not None},
+            {
+                "rows": rows,
+                "writable": pack_dir is not None,
+                "total": total,
+                "completed": completed,
+            },
         )
 
     @app.get("/adjudicate/{case_id}", response_class=HTMLResponse)
     def adjudicate_case(request: Request, case_id: str):
         _guard_id(case_id, "case_id")
         case = pack.case(case_id)
-        # BLIND: show the source document only, never any model output.
+        existing = pack.adjudication(case_id)
+        elements = []
+        if case:
+            for spec in pack.case_schema.elements:
+                val = case.elements.get(spec.name)
+                if val is not None:
+                    elements.append({
+                        "name": spec.name,
+                        "label": spec.name.replace("_", " ").title(),
+                        "required": spec.required,
+                        "value": val,
+                    })
         return _TEMPLATES.TemplateResponse(
             request,
             "adjudicate_form.html",
             {
                 "case_id": case_id,
-                "document": _render_case_document(case) if case else "(case not found)",
+                "elements": elements,
                 "items": pack.rubric.items,
+                "ground_truth": case.ground_truth if case else {},
+                "existing": existing,
                 "writable": pack_dir is not None,
             },
         )
