@@ -5,6 +5,10 @@
 <p class="pill block">Read-only: the UI was started without a writable pack directory.</p>
 {% endif %}
 <p class="muted">Blind grading: you score each case against the rubric without seeing any model output.</p>
+{% if total %}
+<p><strong>{{ completed }} / {{ total }}</strong> cases adjudicated.</p>
+<progress value="{{ completed }}" max="{{ total }}"></progress>
+{% endif %}
 <table>
   <thead><tr><th>Case</th><th>Status</th><th></th></tr></thead>
   <tbody>

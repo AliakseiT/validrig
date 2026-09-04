@@ -13,9 +13,12 @@
 <form method="post" action="/calibrate/{{ run_id }}/unit">
   <input type="hidden" name="key" value="{{ key }}">
   {% for item in items %}
-  <fieldset>
+  <fieldset{% if item.critical %} class="critical"{% endif %}>
     <legend><strong>{{ item.id }}</strong>{% if item.critical %} · critical{% endif %}</legend>
     <p>{{ item.statement }}</p>
+    {% if item.grading_instructions %}
+    <p class="muted grading-instructions">{{ item.grading_instructions }}</p>
+    {% endif %}
     {% if item.type == "binary" %}
       <label><input type="radio" name="score__{{ item.id }}" value="{{ item.max_score }}" required> pass</label>
       <label><input type="radio" name="score__{{ item.id }}" value="0"> fail</label>

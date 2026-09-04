@@ -4,21 +4,55 @@
 <p class="muted">Blind mode — no model output is shown. Establish the reference (gold) grade.</p>
 
 <h2>Source document</h2>
-<div class="doc">{{ document }}</div>
+{% for el in elements %}
+<div class="element">
+  <h3>{{ el.label }}{% if el.required %} <span class="muted">(required)</span>{% endif %}</h3>
+  <div class="doc">{{ el.value }}</div>
+</div>
+{% endfor %}
+{% if not elements %}
+<div class="doc">(case not found)</div>
+{% endif %}
+
+{% if ground_truth %}
+<h2>Reference evidence (pack ground truth)</h2>
+<p class="muted">These are the evidence tokens and expected values set at pack build time. Verify they are clinically correct.</p>
+<table>
+  <thead><tr><th>Rubric item</th><th>Expected</th><th>Evidence tokens</th></tr></thead>
+  <tbody>
+  {% for item_id, gt in ground_truth.items() %}
+    <tr>
+      <td>{{ item_id }}</td>
+      <td>{% if gt.expected %}<span class="pill pass">pass</span>{% else %}<span class="pill block">fail</span>{% endif %}</td>
+      <td>{{ gt.evidence | join(", ") }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
 
 <h2>Reference grade</h2>
 <form method="post" action="/adjudicate/{{ case_id }}">
   {% for item in items %}
-  <fieldset>
+  <fieldset{% if item.critical %} class="critical"{% endif %}>
     <legend><strong>{{ item.id }}</strong>{% if item.critical %} · critical{% endif %}</legend>
     <p>{{ item.statement }}</p>
+    {% if item.grading_instructions %}
+    <p class="muted grading-instructions">{{ item.grading_instructions }}</p>
+    {% endif %}
     {% if item.type == "binary" %}
-      <label><input type="radio" name="score__{{ item.id }}" value="{{ item.max_score }}" required> pass</label>
-      <label><input type="radio" name="score__{{ item.id }}" value="0"> fail</label>
+      <label><input type="radio" name="score__{{ item.id }}" value="{{ item.max_score }}"
+        {% if existing and existing.values.get(item.id) == item.max_score %}checked{% endif %}
+        required> pass</label>
+      <label><input type="radio" name="score__{{ item.id }}" value="0"
+        {% if existing and existing.values.get(item.id) == 0.0 %}checked{% endif %}
+      > fail</label>
     {% else %}
       <label>score (0–{{ item.max_score }}):
         <input type="number" name="score__{{ item.id }}" min="0" max="{{ item.max_score }}"
-               step="0.1" required></label>
+               step="0.1"
+               {% if existing and item.id in existing.values %}value="{{ existing.values[item.id] }}"{% endif %}
+               required></label>
     {% endif %}
   </fieldset>
   {% endfor %}

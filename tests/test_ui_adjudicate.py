@@ -73,3 +73,49 @@ def test_read_only_when_no_pack_dir(tmp_path):
     # a post is a no-op redirect, writes nothing
     resp = client.post("/adjudicate/C001", data={"score__item_diagnosis": "1.0"})
     assert resp.status_code == 200
+
+
+def test_adjudicate_list_shows_progress(tmp_path):
+    _, client = _client(tmp_path)
+    r = client.get("/adjudicate")
+    assert r.status_code == 200
+    # the demo pack has 3 cases, all pre-adjudicated
+    assert "3 / 3" in r.text
+    assert "<progress" in r.text
+
+
+def test_adjudicate_form_shows_grading_instructions(tmp_path):
+    _, client = _client(tmp_path)
+    r = client.get("/adjudicate/C001")
+    assert r.status_code == 200
+    # grading_instructions from the rubric should appear
+    assert "Score 1.0 if the output names the histological diagnosis" in r.text
+
+
+def test_adjudicate_form_shows_ground_truth_evidence(tmp_path):
+    _, client = _client(tmp_path)
+    r = client.get("/adjudicate/C001")
+    assert r.status_code == 200
+    assert "Reference evidence" in r.text
+    assert "invasive adenocarcinoma" in r.text
+    assert "EGFR" in r.text
+    assert "cT2N1M0" in r.text
+
+
+def test_adjudicate_form_shows_elements_with_labels(tmp_path):
+    _, client = _client(tmp_path)
+    r = client.get("/adjudicate/C001")
+    assert r.status_code == 200
+    # element names humanised as labels
+    assert "Pathology Report" in r.text
+    assert "Molecular Report" in r.text
+
+
+def test_adjudicate_form_prefills_existing_values(tmp_path):
+    _, client = _client(tmp_path)
+    r = client.get("/adjudicate/C001")
+    assert r.status_code == 200
+    # C001's existing adjudication has item_diagnosis=1.0, item_molecular=1.0, item_staging=1.0
+    # the pass radio for item_diagnosis should be checked
+    assert 'name="score__item_diagnosis" value="1.0"' in r.text
+    assert "checked" in r.text

@@ -59,6 +59,16 @@ def test_calibrate_list_and_unit_form(tmp_path):
         assert item.id in r2.text
 
 
+def test_calibrate_unit_form_shows_grading_instructions(tmp_path):
+    pack, _, _, run_id, client = _setup(tmp_path)
+    r = client.get(
+        f"/calibrate/{run_id}/unit",
+        params={"key": "C001::ablation:none|format:structured::0"},
+    )
+    assert r.status_code == 200
+    assert "Score 1.0 if the output names the histological diagnosis" in r.text
+
+
 def test_posting_a_grade_persists_to_calibration_store(tmp_path):
     _, store, calib, run_id, client = _setup(tmp_path)
     grade = store.read_grades(run_id)[0]
