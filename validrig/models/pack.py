@@ -57,6 +57,10 @@ class Case(_Frozen):
     case_id: str
     elements: dict[str, Any]
     ground_truth: dict[str, Any] = Field(default_factory=dict)
+    # Local-only input/output references for adapters that operate on files or
+    # recorded responses. References are content, not secrets: they are pinned
+    # in the pack hash, while the referenced files stay outside the run store.
+    references: dict[str, str] = Field(default_factory=dict)
     # Optional pre-translated element variants: language code -> {element: text}.
     # Prepared and human-checked at pack build; the language axis selects among
     # them. Absent translations fall back to the original element text.

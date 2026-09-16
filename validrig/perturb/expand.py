@@ -30,6 +30,7 @@ class ExpansionUnit:
     sut_id: str
     document: str
     provenance: dict[str, Any] = field(default_factory=dict)
+    references: dict[str, str] = field(default_factory=dict)
 
 
 def _join_ids(existing: str, new: str) -> str:
@@ -117,6 +118,7 @@ def expand_battery(pack: Pack, battery: BatterySpec) -> list[ExpansionUnit]:
                             sut_id=sut_id,
                             document=document,
                             provenance=state.provenance,
+                            references=dict(state.case.references),
                         )
                     )
 

@@ -134,6 +134,7 @@ def run_battery(
             context = SUTContext(
                 case_id=unit.case_id,
                 tool_perturbation=_tool_perturbation(unit.provenance),
+                references=unit.references,
             )
             out = adapter.generate(unit.document, seed, context=context)
             gen = Generation(

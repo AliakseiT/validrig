@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from typing import Mapping
 
 from validrig.models.results import TokenUsage
 from validrig.models.sut import Trace
@@ -34,6 +35,10 @@ class SUTContext:
 
     case_id: str
     tool_perturbation: dict | None = None
+    # Case-local references (for example a PDF URL or a recorded JSON output).
+    # They are passed to the adapter for this invocation and are never persisted
+    # in a Generation or sent to a judge unless the adapter explicitly does so.
+    references: Mapping[str, str] | None = None
 
 
 class SUTAdapter(ABC):

@@ -9,6 +9,7 @@ two stores.
 
 from __future__ import annotations
 
+import json
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
@@ -17,7 +18,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-from validrig.pathsafe import is_safe_id
+from validrig.pathsafe import confined_path, is_safe_id
 
 from validrig.authoring.adjudicate import adjudicated_case_ids, write_adjudication
 from validrig.calibration.agreement import compute_agreement
@@ -77,6 +78,48 @@ def create_app(
             (u.case_id, u.perturbation_id, u.sample_idx): u.document
             for u in expand_battery(pack, battery)
         }
+
+    def _reference_output_for(run_id: str, case_id: str) -> str | None:
+        """Load an optional local reference output for the calibration view.
+
+        This is intentionally read-only and confined to ``pack_dir``. The
+        reference is not loaded for the blind gold-authoring view, and its path
+        is never copied into the run store or returned by an API endpoint.
+        """
+
+        if pack_dir is None:
+            return None
+        case = pack.case(case_id)
+        if case is None:
+            return None
+        run = store.read_run(run_id)
+        sut = pack.sut(run.pins.sut_id)
+        configured_key = (
+            str(sut.binding.params.get("reference_key"))
+            if sut is not None and sut.binding.params.get("reference_key")
+            else None
+        )
+        keys = [configured_key] if configured_key else []
+        keys.extend(k for k in ("reference_output", "baseline_output", "baseline", "output") if k not in keys)
+        reference = next((case.references.get(k) for k in keys if case.references.get(k)), None)
+        if not reference or reference.startswith(("http://", "https://", "file://")):
+            return None
+        try:
+            path = confined_path(pack_dir, reference)
+            if not path.is_file() or path.stat().st_size > 10 * 1024 * 1024:
+                return None
+            text = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeError, ValueError):
+            return None
+        try:
+            value = json.loads(text)
+        except json.JSONDecodeError:
+            return text
+        if isinstance(value, dict) and "raw_output" in value:
+            value = value["raw_output"]
+        elif isinstance(value, dict) and "output" in value:
+            value = value["output"]
+        return value if isinstance(value, str) else json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True)
 
     def _sample_for(run_id: str) -> list[tuple]:
         run = store.read_run(run_id)
@@ -140,6 +183,7 @@ def create_app(
                 "case_id": content_key[0],
                 "perturbation_id": content_key[1],
                 "document": documents.get(content_key, ""),
+                "reference": _reference_output_for(run_id, content_key[0]),
                 "output": gen.raw_output if gen else "(generation not found)",
                 "items": pack.rubric.items,
             },

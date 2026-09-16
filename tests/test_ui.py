@@ -7,6 +7,8 @@ clinician — that UX review is out of scope here.
 """
 
 from pathlib import Path
+import json
+import shutil
 
 from fastapi.testclient import TestClient
 
@@ -106,3 +108,39 @@ def test_never_binds_all_interfaces_by_default():
 
     args = build_parser().parse_args(["ui", "packs/demo-tumor-board"])
     assert args.host == "127.0.0.1"
+
+
+def test_calibrate_unit_shows_local_recorded_reference(tmp_path):
+    pack_dir = tmp_path / "pack"
+    shutil.copytree(PACK, pack_dir)
+    case_path = pack_dir / "casebank" / "cases" / "C001.json"
+    case = json.loads(case_path.read_text(encoding="utf-8"))
+    case["references"] = {"reference_output": "references/C001.json"}
+    case_path.write_text(json.dumps(case), encoding="utf-8")
+    reference_dir = pack_dir / "references"
+    reference_dir.mkdir()
+    (reference_dir / "C001.json").write_text(
+        json.dumps({"output": "historical 44ai response"}), encoding="utf-8"
+    )
+
+    pack = load_pack(pack_dir)
+    store = RunStore(tmp_path / "runs")
+    result = run_battery(pack, "smoke", store, seed=1, now=CLOCK)[0]
+    client = TestClient(
+        create_app(
+            pack,
+            store,
+            CalibrationStore(tmp_path / "runs"),
+            grader_id="dr_test",
+            now=CLOCK,
+            pack_dir=pack_dir,
+        )
+    )
+
+    response = client.get(
+        f"/calibrate/{result.run_id}/unit",
+        params={"key": "C001::ablation:none|format:structured::0"},
+    )
+    assert response.status_code == 200
+    assert "Recorded reference output" in response.text
+    assert "historical 44ai response" in response.text
