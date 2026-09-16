@@ -3,11 +3,22 @@
 <h1>Grade generation</h1>
 <p class="muted">Run <code>{{ run_id }}</code> · case {{ case_id }} · perturbation <code>{{ perturbation_id }}</code></p>
 
-<h2>Source document</h2>
-<div class="doc">{{ document }}</div>
-
-<h2>System-under-test output</h2>
-<div class="doc">{{ output }}</div>
+<div class="comparison-grid">
+  <section>
+    <h2>Source document</h2>
+    <div class="doc">{{ document }}</div>
+  </section>
+  {% if reference %}
+  <section>
+    <h2>Recorded reference output</h2>
+    <div class="doc">{{ reference }}</div>
+  </section>
+  {% endif %}
+  <section>
+    <h2>System-under-test output</h2>
+    <div class="doc">{{ output }}</div>
+  </section>
+</div>
 
 <h2>Your grade</h2>
 <form method="post" action="/calibrate/{{ run_id }}/unit">

@@ -4,7 +4,8 @@
 The mapping from spec to adapter is the only place the engine decides *how* to
 reach a system under test. The fake model is selected for any ``llm_call`` whose
 binding names ``model_id: fake``; everything else with an endpoint goes through
-the OpenAI-compatible adapter.
+the OpenAI-compatible adapter. ``external_api`` is an explicit seam for the
+private recorded and document-recognition protocols.
 """
 
 from __future__ import annotations
@@ -39,6 +40,16 @@ def build_adapter(spec: SUTSpec, mocks: dict[str, Any] | None = None) -> SUTAdap
             tools_to_call=binding.params.get("tools_to_call", []),
             mock_store=MockStore(mocks or {}),
         )
+    if spec.kind == "external_api":
+        from validrig.sut.recognition import (
+            RecognitionWorker,
+            RecordedRecognition,
+            protocol_for,
+        )
+
+        if protocol_for(binding) == "recorded":
+            return RecordedRecognition(binding)
+        return RecognitionWorker(binding)
     raise NotImplementedError(
         f"SUT kind '{spec.kind}' with model '{binding.model_id}' is not executable"
     )

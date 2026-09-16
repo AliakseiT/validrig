@@ -19,6 +19,9 @@
     .advisory_low_n, .no_data { background: #ca8a0422; color: #ca8a04; }
     .doc { background: #8881; padding: 0.75rem; border-radius: 6px; white-space: pre-wrap;
            font-size: 0.85rem; max-height: 18rem; overflow: auto; }
+    .comparison-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+                       gap: 1rem; align-items: start; }
+    .comparison-grid section { min-width: 0; }
     .nav { font-size: 0.85rem; margin-bottom: 1rem; color: #8888; }
     fieldset { border: 1px solid #8884; border-radius: 6px; margin: 0.5rem 0; }
     fieldset.critical { border-color: #dc262688; background: #dc262608; }
